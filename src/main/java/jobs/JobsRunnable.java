@@ -1,6 +1,6 @@
 package jobs;
 
-import DataTypes.LongsPairWritable;
+import DataTypes.LineSyntacticNgramKey;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
@@ -84,9 +84,9 @@ public class JobsRunnable {
         } */
         job.setReducerClass(ParseCorpus.ReducerClass.class);
         job.setMapOutputKeyClass(Text.class);
-        job.setMapOutputValueClass(LongsPairWritable.class);
+        job.setMapOutputValueClass(LineSyntacticNgramKey.class);
         job.setOutputKeyClass(Text.class);
-        job.setOutputValueClass(LongsPairWritable.class);
+        job.setOutputValueClass(LineSyntacticNgramKey.class);
         job.setOutputFormatClass(TextOutputFormat.class);
         return setInputOutput(job, corpusPath, false);
     }
