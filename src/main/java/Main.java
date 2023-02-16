@@ -1,56 +1,97 @@
+import com.amazonaws.services.s3.model.DeleteBucketRequest;
+import com.amazonaws.services.s3.model.DeleteObjectRequest;
+import com.amazonaws.services.s3.model.GetObjectRequest;
+import com.amazonaws.services.s3.model.ListObjectsRequest;
+import com.amazonaws.services.s3.model.S3Object;
+import localClasses.ResultsEvaluator;
+import localClasses.ClassifierTrainer;
+import localClasses.TxtToArffConverter;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.*;
+import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
+import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import weka.classifiers.Classifier;
+import weka.core.Instances;
+import weka.core.converters.ConverterUtils;
+import software.amazon.awssdk.services.s3.model.*;
+
+import static java.lang.System.exit;
+import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.services.ec2.model.InstanceType;
 import com.amazonaws.services.elasticmapreduce.AmazonElasticMapReduce;
 import com.amazonaws.services.elasticmapreduce.AmazonElasticMapReduceClient;
 import com.amazonaws.services.elasticmapreduce.model.*;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.model.*;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ec2.Ec2Client;
 import software.amazon.awssdk.services.ec2.model.CreateKeyPairRequest;
 import software.amazon.awssdk.services.ec2.model.Ec2Exception;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.*;
 
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.List;
 
-import static java.lang.System.exit;
-
 public class Main {
+
     private static String JarBucketName ;
-    private static String stopwords ;
 
+    private static final String txtHypernymPath = "hypernym.txt";
+
+    private static final String txtVectorsPath = "vectors.txt";
+
+    private static final String arffVectorsPath = "vectors.arff";
     private static S3Client s3;
-    private static Boolean bool1 ;
-    public static void main(String[] args) {
 
-        //arg[0] => bucketname
-        //arg[1] => eng-stopwords.txt
-        //arg[2] => jarfile
-
-
+    public static void main(String[] args) throws Exception {
+        //we should recieve as input the DPmin value, input of the biarcs data set and the location of the
+        //hypernym.txt file (can be local)
         if (args.length < 3) {
             System.out.println("please provide all the args - input, output, jarfile");
             exit(1);
         }
         JarBucketName=args[0];
-        stopwords=args[1];
-        bool1 = args.length >3 ;
-        System.out.println("args are:");
-//        System.out.println("s3://bucketonation111/input3");
-        System.out.println("s3://" + JarBucketName+"/");
-        System.out.println("s3://" + JarBucketName + "2/"+stopwords);
 
         uploadJar(args[2], JarBucketName);
-        uploadJar(stopwords, JarBucketName+"2");
-//        initHadoopJar need more work please be advised!!!
-//        TODO: make all the config in it as it should
-        //notice we can do it here natively the decision of main file,
-        // just create another file for main for the reduce app
+        uploadJar(txtHypernymPath, JarBucketName+"2");
         System.out.println("init cluster");
         initHadoopJar(JarBucketName);
+        //after those two jobs finish, we have S3 bucket containing the data we would like to learn from
+        downloadFromS3();
+        new TxtToArffConverter().convert(txtVectorsPath,arffVectorsPath);
+        ConverterUtils.DataSource source = new ConverterUtils.DataSource(arffVectorsPath);
+        Instances data = source.getDataSet();
+        ClassifierTrainer trainer = new ClassifierTrainer();
+        Classifier nb = trainer.train(data);
+        new ResultsEvaluator().evaluateResults(data, nb);
     }
+
+    private static void downloadFromS3() {
+        //here we are downloading the map-reduce jobs result and saving it as the data for the classifier
+
+            s3 = S3Client.builder().region(Region.US_EAST_1).build();
+
+           /* GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(key)
+                    .build(); */
+            try {
+                File f = new File(txtVectorsPath);
+                if(f.delete()) {
+                    System.out.println("output file replaced with new one");
+                    }
+                }
+            catch(Exception e){
+                //No file, all good
+            }
+         //   s3.getObject(getObjectRequest, Paths.get(outputPath));
+        }
 
     private static void uploadJar(String jarFilePath, String bucketName) {
         Region region = Region.US_EAST_1;
@@ -77,14 +118,6 @@ public class Main {
         try {
             CreateBucketRequest request = CreateBucketRequest.builder().bucket(bucketName).build();
             s3Client.createBucket(request);
-//            s3Client.createBucket(CreateBucketRequest
-//                    .builder()
-//                    .bucket(bucketName)
-//                    .createBucketConfiguration(
-//                            CreateBucketConfiguration.builder()
-//                                    .locationConstraint(region.id())
-//                                    .build())
-//                    .build());
             System.out.println("Creating bucket: " + bucketName);
             s3Client.waiter().waitUntilBucketExists(HeadBucketRequest.builder()
                     .bucket(bucketName)
@@ -93,7 +126,7 @@ public class Main {
             System.out.printf("%n");
         } catch (S3Exception e) {
             System.err.println(e.awsErrorDetails().errorMessage());
-            System.exit(1);
+            exit(1);
         }
     }
 
@@ -109,28 +142,18 @@ public class Main {
                     keyName);
 
         } catch (Ec2Exception e) {
-// System.out.println(e.awsErrorDetails().errorMessage());
-            // System.exit(1);
+
         }
     }
 
     public static void initHadoopJar(String JarBucketName) {
 
-        AWSCredentials credentials = new DefaultAWSCredentialsProviderChain().getCredentials();
+     /*   AWSCredentials credentials = new DefaultAWSCredentialsProviderChain().getCredentials();
         AmazonElasticMapReduce mapReduce = new AmazonElasticMapReduceClient(credentials);
         createKeyPair("yourkey");
         HadoopJarStepConfig hadoopJarStep = new HadoopJarStepConfig()
                 .withJar("s3n://"+JarBucketName+"/jarfile.jar") // This should be a full map reduce application.
-
                 .withMainClass("jobs.KnowledgeBaseRunnable");
-//                corpus out eng-stopwords.txt
-
-
-//
-//                .withArgs("s3://bucketonation111/input3","s3://" + JarBucketName+"/output/","s3://" + JarBucketName + "2/"+stopwords);
-
-
-
 
         hadoopJarStep=  bool1?hadoopJarStep.withArgs("s3://datasets.elasticmapreduce/ngrams/books/20090715/eng-gb-all/3gram/data","s3://" + JarBucketName+"/output/","s3://" + JarBucketName + "2/"+stopwords, "shouldOperateLocalAggregation"):
                 hadoopJarStep.withArgs("s3://datasets.elasticmapreduce/ngrams/books/20090715/eng-gb-all/3gram/data","s3://" + JarBucketName+"/output/","s3://" + JarBucketName + "2/"+stopwords );
@@ -154,24 +177,10 @@ public class Main {
         runFlowRequest.setJobFlowRole("EMR_EC2_DefaultRole");
         RunJobFlowResult runJobFlowResult = mapReduce.runJobFlow(runFlowRequest);
         String jobFlowId = runJobFlowResult.getJobFlowId();
-        System.out.println("Ran job flow with id: " + jobFlowId);
-//        while (true) {
-//            DescribeJobFlowsRequest request = DescribeJobFlowsRequest.builder()
-//                    .jobFlowIds(jobFlowId)
-//                    .build();
-//            DescribeJobFlowsResponse response = emrClient.describeJobFlows(request);
-//            JobFlowExecutionStatus status = response.jobFlows().get(0).executionStatusDetail().state();
-//            if (status == JobFlowExecutionStatus.TERMINATED) {
-//                System.out.println("Job flow has completed");
-//                break;
-//            } else {
-//                System.out.println("Job flow is still in progress. Current status: " + status);
-//                Thread.sleep(60 * 1000); // sleep for 1 minute
-//            }
-//        }
+        System.out.println("Ran job flow with id: " + jobFlowId); */
     }
     public static void cleanUp( String bucketName, String keyName) {
-        System.out.println("Cleaning up...");
+      /*  System.out.println("Cleaning up...");
         try {
             ListObjectsRequest listObjectsRequest = ListObjectsRequest.builder().bucket(bucketName).build();
             ListObjectsResponse res = s3.listObjects(listObjectsRequest);
@@ -190,12 +199,11 @@ public class Main {
             System.out.printf("%n");
         } catch (S3Exception e) {
             System.err.println(e.awsErrorDetails().errorMessage());
-            System.exit(1);
+            exit(1);
         }
         System.out.println("Cleanup complete");
-        System.out.printf("%n");
+        System.out.printf("%n"); */
     }
 }
-//Release label:emr-5.36.0
-//        Hadoop distribution:Amazon 2.10.1
+
 
