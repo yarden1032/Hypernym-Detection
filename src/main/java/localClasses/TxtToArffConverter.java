@@ -13,7 +13,6 @@ public class TxtToArffConverter {
         fis.close();
         String st = new String(bt);
         String s1[] = st.trim().split("\n");
-        String col[] = st.trim().split("\n");
         String ar = "@relation hypernym\n";
         ar = ar + "\n";
         ar = ar + "@attribute vector string\n";

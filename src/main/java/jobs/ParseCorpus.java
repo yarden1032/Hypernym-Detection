@@ -69,7 +69,7 @@ public class ParseCorpus {
             SyntacticNgram [] synArray = (SyntacticNgram[]) Arrays.stream(syntactic_ngram_String_array).map(x ->{
                String [] splitter =   x.split("/");
                //add here num of occurrences
-               return new SyntacticNgram(splitter[0],splitter[1],splitter[2],new LongWritable(Long.parseLong(splitter[3])));
+               return new SyntacticNgram(splitter[0],splitter[1],splitter[2],Long.parseLong(splitter[3]));
            }).toArray();
             for (SyntacticNgram syntacticNgram : synArray) {
                 try {
@@ -90,7 +90,6 @@ public class ParseCorpus {
                     continue;
                     //TODO:not sure about this exception - be advised
                 }
-
 
             }
 

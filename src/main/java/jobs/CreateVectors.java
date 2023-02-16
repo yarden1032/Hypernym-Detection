@@ -17,9 +17,7 @@ public class CreateVectors {
     //so we will get - <noun pair>,<path>
     public static class CorpusMapperClass extends Mapper<LongWritable, Text, NounPair, DependencyPath> {
 
-        protected void setup(Mapper context) throws IOException {
-
-        }
+        protected void setup(Mapper context) throws IOException { }
 
         @Override
         public void map(LongWritable lineId, Text line, Mapper.Context context) throws IOException, InterruptedException {
@@ -31,7 +29,7 @@ public class CreateVectors {
                 String [] nouns = splitLine[i].split(",");
                 if (nouns.length  == 3 )
                     //not final - need fix according to changes in DependencyPath class
-                context.write(new NounPair(nouns[0],nouns[1],Long.parseLong(nouns[2])),new DependencyPath(lineId.get(),splitPath[0],splitPath[1],new LongWritable(Long.parseLong(splitPath[3]))));
+                    context.write(new NounPair(nouns[0],nouns[1],Long.parseLong(nouns[2])),new DependencyPath(lineId.get(),splitPath[0],splitPath[1],Long.parseLong(splitPath[3])));
             }
         }
     }
@@ -41,9 +39,7 @@ public class CreateVectors {
     //the mapper will send the reduce the pair and the boolean classification
     public static class HypernymMapperClass extends Mapper<LongWritable, Text, NounPair, DependencyPath> {
 
-        protected void setup(Mapper context) throws IOException {
-
-        }
+        protected void setup(Mapper context) throws IOException { }
 
         @Override
         public void map(LongWritable lineId, Text line, Mapper.Context context) throws IOException, InterruptedException {
@@ -78,7 +74,6 @@ public class CreateVectors {
         public void setup(Context context) {
             featureLexiconSize = context.getConfiguration().getInt("featureLexiconSize", 100);
         }
-
 
         @Override
         public void reduce(NounPair nounPair, Iterable<DependencyPath> paths, Context context)

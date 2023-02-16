@@ -35,11 +35,18 @@ public class NounPair
     @Override
     public void write(DataOutput dataOutput) throws IOException {
 
+        dataOutput.writeChars(word1);
+        dataOutput.writeChars(word2);
+        dataOutput.writeLong(numOfOccurrences);
+
     }
 
     @Override
     public void readFields(DataInput dataInput) throws IOException {
 
+        word1 = dataInput.readLine();
+        word2 = dataInput.readLine();
+        numOfOccurrences = dataInput.readLong();
 
     }
 

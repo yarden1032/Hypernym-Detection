@@ -9,26 +9,22 @@ import java.io.IOException;
 
 
 //Roni: should be changed here so the path can have dynamic length;
-public class DependencyPath
-        implements WritableComparable<DependencyPath> {
+public class DependencyPath implements WritableComparable<DependencyPath> {
 
     public Long idInVector;
     public String type;
     public String typeInSentence;
-
-    public LongWritable direction;
-
+    public Long direction;
     private boolean isReal = true;
 
-    public DependencyPath(String type, String typeInSentence, LongWritable direction) {
+    public DependencyPath(String type, String typeInSentence, Long direction) {
 
         this.type = type;
         this.typeInSentence = typeInSentence;
         this.direction = direction;
     }
 
-    //this constructor builds fake dependency path
-    public DependencyPath(Long idInVector,String type, String typeInSentence, LongWritable direction) {
+    public DependencyPath(Long idInVector,String type, String typeInSentence, Long direction) {
 
         this.idInVector = idInVector;
         this.type = type;
@@ -36,21 +32,32 @@ public class DependencyPath
         this.direction = direction;
     }
 
+
+    //this constructor builds fake dependency path
     public DependencyPath() {
-
         isReal = false;
-
     }
 
 
     @Override
     public void write(DataOutput dataOutput) throws IOException {
 
+        dataOutput.writeLong(idInVector);
+        dataOutput.writeChars(type);
+        dataOutput.writeChars(typeInSentence);
+        dataOutput.writeLong(direction);
+        dataOutput.writeBoolean(isReal);
+
     }
 
     @Override
     public void readFields(DataInput dataInput) throws IOException {
 
+        idInVector = dataInput.readLong();
+        type = dataInput.readLine();
+        typeInSentence = dataInput.readLine();
+        direction = dataInput.readLong();
+        isReal = dataInput.readBoolean();
 
     }
 
