@@ -17,6 +17,8 @@ public class SyntacticNgram implements WritableComparable<SyntacticNgram>  {
 
     public  String typeInSentence ;
 
+    public Long numOfOccurrences;
+
     public SyntacticNgram(String head_word,   String type, String typeInSentence,LongWritable position ){
 
         this.head_word = head_word;

@@ -1,12 +1,18 @@
 package jobs;
 
-import DataTypes.LineSyntacticNgramKey;
+import DataTypes.CounterType;
+import DataTypes.DependencyPath;
+import DataTypes.NounPair;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Counter;
+import org.apache.hadoop.mapreduce.Counters;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.input.MultipleInputs;
 import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
+import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
@@ -16,9 +22,13 @@ public class JobsRunnable {
 
     private static String bucketPath;
     private static String corpusPath;
+
+    private static String hypernymPath;
     private static final String LOG_PATH = "/log-files/";
 
-    private static long N;
+    private static long DPmin;
+
+    private static long featureLexiconSize;
 
     public static void main(String[] args) throws IOException {
 
@@ -37,22 +47,22 @@ public class JobsRunnable {
 
         // Split Corpus
         Configuration parseCorpusLinesConfig = new Configuration();
+        parseCorpusLinesConfig.setLong("DPmin",DPmin);
         final Job parseCorpus = Job.getInstance(parseCorpusLinesConfig, "Parse Corpus Lines");
         String parseCorpusPath = createParseCorpusJob(parseCorpus, corpusPath);
         waitForJobCompletion(parseCorpus, parseCorpusPath);
 
-        //Counters counters = parseCorpusLines.getCounters();
-        //Counter counter = counters.findCounter(CounterType.NGRAMS_COUNTER);
-        //N = counter.getValue();
+        Counters counters = parseCorpus.getCounters();
+        Counter counter = counters.findCounter(CounterType.FEATURE_LEXICON);
+        featureLexiconSize = counter.getValue();
 
 
-        //construst Calculation variables
-     /*   Configuration constructCalculationVariableConfig = new Configuration();
-        //constructCalculationVariableConfig.setEnum("operation", Operation.NR);
-        final Job constructCalculationVariables = Job.getInstance(constructCalculationVariableConfig, "Construct calculation variables");
-        String constructCalculationVariablePath = createConstructCalculationVariablesJob(constructCalculationVariables, parseCorpusPath);
-        waitForJobCompletion(constructCalculationVariables, constructCalculationVariablePath); */
-
+        //Create Vectors
+        Configuration createVectorsConfig = new Configuration();
+        createVectorsConfig.setLong("featureLexiconSize",featureLexiconSize);
+        final Job constructCalculationVariables = Job.getInstance(createVectorsConfig, "Construct calculation variables");
+        String constructCalculationVariablePath = createCreateVectorsJob(constructCalculationVariables, corpusPath,hypernymPath);
+        waitForJobCompletion(constructCalculationVariables, constructCalculationVariablePath);
     }
 
 
@@ -84,12 +94,37 @@ public class JobsRunnable {
         } */
         job.setReducerClass(ParseCorpus.ReducerClass.class);
         job.setMapOutputKeyClass(Text.class);
-        job.setMapOutputValueClass(LineSyntacticNgramKey.class);
+        job.setMapOutputValueClass(DependencyPath.class);
         job.setOutputKeyClass(Text.class);
-        job.setOutputValueClass(LineSyntacticNgramKey.class);
+        job.setOutputValueClass(DependencyPath.class);
         job.setOutputFormatClass(TextOutputFormat.class);
         return setInputOutput(job, corpusPath, false);
     }
+
+    private static String createCreateVectorsJob(Job job, String corpusPath, String hypernymPath) throws IOException {
+
+            job.setJarByClass(CreateVectors.class);
+            job.setReducerClass(CreateVectors.ReducerClass.class);
+            job.setMapOutputKeyClass(NounPair.class);
+            job.setMapOutputValueClass(DependencyPath.class);
+            //job.setCombinerClass(CreateVectors.CombinerClass.class);
+            job.setOutputKeyClass(Text.class);
+            job.setOutputFormatClass(TextOutputFormat.class);
+            job.setOutputValueClass(Boolean.class);
+            MultipleInputs.addInputPath(
+                    job,
+                    new Path(corpusPath),
+                    TextInputFormat.class,
+                    CreateVectors.CorpusMapperClass.class);
+            MultipleInputs.addInputPath(
+                    job,
+                    new Path(hypernymPath),
+                    TextInputFormat.class,
+                    CreateVectors.HypernymMapperClass.class);
+
+            return setOutput(job);
+    }
+
 
     private static void waitForJobCompletion(final Job job, String outputPath) {
         String description = job.getJobName();
