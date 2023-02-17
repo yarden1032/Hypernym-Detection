@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 public class ParseCorpus {
@@ -107,7 +108,11 @@ public class ParseCorpus {
             }
         } */
 
-
+    public static String removeLastChar(String s) {
+        return (s == null || s.length() == 0)
+                ? null
+                : (s.substring(0, s.length() - 1));
+    }
         public static class ReducerClass extends Reducer<DependencyPath, NounPair, DependencyPath,Text> {
 
             private long DMmin;
@@ -125,7 +130,17 @@ public class ParseCorpus {
             @Override
             public void reduce(DependencyPath path, Iterable<NounPair> occurrencesList, Context context)
                     throws IOException, InterruptedException {
+                StringBuilder valueString = new StringBuilder();
+                long counter = 0;
+                for (NounPair value : occurrencesList) {
+                    counter++;
+                    valueString.append(value.toString()).append("\t");
 
+                }
+                if(counter>DMmin) {
+                    featureLexiconSizeCounter.increment(1);
+                    context.write(path, new Text(valueString.substring(0, valueString.length() - 1)));
+                }
                 /*Roni - not sure if the output type should be Text or something else, but we want to create a list of all the noun pairs.
                  the format should be - key: <dependency path> value: <noun pair<TAB>noun pair<TAB>noun pair<TAB>....>
                 the pairs would be split by tab and the nouns inside the pairs would be split by comma "," .
@@ -134,8 +149,8 @@ public class ParseCorpus {
                 */
 
 
-                //put it before you write something to the context so we would know it's size
-                featureLexiconSizeCounter.increment(1);
+                //put it before you write something to the context, so we would know it's size
+//                featureLexiconSizeCounter.increment(1);
 
             }
         }

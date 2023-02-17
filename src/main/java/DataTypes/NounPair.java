@@ -58,7 +58,7 @@ public class NounPair
 
     @Override
     public String toString() {
-        return word1 + ',' + word2;
+        return word1 + ' ' + word2;
     }
 }
 
