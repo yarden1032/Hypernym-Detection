@@ -1,6 +1,8 @@
 package DataTypes;
 
+import org.apache.hadoop.io.BooleanWritable;
 import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
 
 import java.io.DataInput;
@@ -11,53 +13,60 @@ import java.io.IOException;
 //Roni: should be changed here so the path can have dynamic length;
 public class DependencyPath implements WritableComparable<DependencyPath> {
 
-    public Long idInVector;
-    public String type;
-    public String typeInSentence;
-    public Long direction;
-    private boolean isReal = true;
+    public LongWritable idInVector;
 
-    public DependencyPath(String type, String typeInSentence, Long direction) {
+    public Text typeInSentence;
 
-        this.type = type;
+    public BooleanWritable isReal;
+
+    public DependencyPath(Text typeInSentence) {
+
+//        this.type = type;
         this.typeInSentence = typeInSentence;
-        this.direction = direction;
+ //       this.direction = direction;
+        this.idInVector = new LongWritable(-1L);
+        isReal = new BooleanWritable(true);
     }
 
-    public DependencyPath(Long idInVector,String type, String typeInSentence, Long direction) {
+    public DependencyPath(LongWritable idInVector, Text typeInSentence) {
 
         this.idInVector = idInVector;
-        this.type = type;
         this.typeInSentence = typeInSentence;
-        this.direction = direction;
+        isReal = new BooleanWritable(true);
     }
 
 
     //this constructor builds fake dependency path
     public DependencyPath() {
-        isReal = false;
+        idInVector = new LongWritable(-1L);
+        typeInSentence = new Text("");
+        isReal = new BooleanWritable(false);
     }
 
 
     @Override
     public void write(DataOutput dataOutput) throws IOException {
 
-        dataOutput.writeLong(idInVector);
-        dataOutput.writeChars(type);
-        dataOutput.writeChars(typeInSentence);
-        dataOutput.writeLong(direction);
-        dataOutput.writeBoolean(isReal);
 
+        idInVector.write(dataOutput);
+
+
+        typeInSentence.write(dataOutput);
+
+        //direction.write(dataOutput);
+
+        isReal.write(dataOutput);
     }
 
     @Override
     public void readFields(DataInput dataInput) throws IOException {
 
-        idInVector = dataInput.readLong();
-        type = dataInput.readLine();
-        typeInSentence = dataInput.readLine();
-        direction = dataInput.readLong();
-        isReal = dataInput.readBoolean();
+
+        idInVector.readFields(dataInput);
+
+        typeInSentence.readFields(dataInput);
+
+        isReal.readFields(dataInput);
 
     }
 
@@ -77,16 +86,16 @@ public class DependencyPath implements WritableComparable<DependencyPath> {
     }
 
     private int insideComparison(DependencyPath other) {
-        return other.type.compareTo(this.type)==0?(other.typeInSentence.compareTo(this.typeInSentence)==0?direction.compareTo(other.direction):other.typeInSentence.compareTo(this.typeInSentence)):other.type.compareTo(this.type);
+        return typeInSentence.compareTo(other.typeInSentence);
     }
     public boolean isFake(){
-        return !isReal;
+        return !isReal.get();
     }
 
     @Override
-    public String toString() {
-        return type + ' ' + typeInSentence + ' '+ direction.toString();
-    }
+    public String toString() { return typeInSentence.toString(); }
+
 }
+
 
 

@@ -1,5 +1,8 @@
 package DataTypes;
 
+import org.apache.hadoop.io.BooleanWritable;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
 
 import java.io.DataInput;
@@ -9,44 +12,73 @@ import java.io.IOException;
 public class NounPair
         implements WritableComparable<NounPair> {
 
-    public String word1 ;
-    public  String word2 ;
-    public Long numOfOccurrences;
-    public Boolean isHypernym;
+    public Text word1;
+
+    public Text word2;
+
+    //public LongWritable numOfOccurrences;
+
+    public BooleanWritable isHypernym;
 
     public NounPair(String word1, String word2,Long numOfOccurrences){
 
-        this.word1 = word1;
-        this.word2 = word2;
-        this.numOfOccurrences = numOfOccurrences;
+        this.word1 = new Text(word1);
+
+        this.word2 = new Text(word2);
+
+      //  this.numOfOccurrences = new LongWritable(numOfOccurrences);
+
+        isHypernym = new BooleanWritable(false);
 
     }
 
     public NounPair(String word1, String word2,Long numOfOccurrences,boolean isHypernym){
 
-        this.word1 = word1;
-        this.word2 = word2;
-        this.numOfOccurrences = numOfOccurrences;
-        this.isHypernym = isHypernym;
+        this.word1 = new Text(word1);
 
+        this.word2 = new Text(word2);
+
+        //this.numOfOccurrences = new LongWritable(numOfOccurrences);
+
+        this.isHypernym = new BooleanWritable(isHypernym);
+
+    }
+
+    public NounPair() {
+
+        word1 = new Text();
+
+        word2 = new Text();
+
+        // numOfOccurrences = new LongWritable();
+
+        isHypernym = new BooleanWritable();
     }
 
 
     @Override
     public void write(DataOutput dataOutput) throws IOException {
 
-        dataOutput.writeChars(word1);
-        dataOutput.writeChars(word2);
-        dataOutput.writeLong(numOfOccurrences);
+        word1.write(dataOutput);
+
+        word2.write(dataOutput);
+
+        //numOfOccurrences.write(dataOutput);
+
+        isHypernym.write(dataOutput);
 
     }
 
     @Override
     public void readFields(DataInput dataInput) throws IOException {
 
-        word1 = dataInput.readLine();
-        word2 = dataInput.readLine();
-        numOfOccurrences = dataInput.readLong();
+        word1.readFields(dataInput);
+
+        word2.readFields(dataInput);
+
+        //numOfOccurrences.readFields(dataInput);
+
+        isHypernym.readFields(dataInput);
 
     }
 
@@ -58,7 +90,7 @@ public class NounPair
 
     @Override
     public String toString() {
-        return word1 + ' ' + word2;
+        return word1.toString() + ',' + word2.toString();
     }
 }
 

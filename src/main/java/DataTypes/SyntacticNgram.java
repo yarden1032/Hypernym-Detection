@@ -19,12 +19,13 @@ public class SyntacticNgram implements WritableComparable<SyntacticNgram>  {
 
     public Long numOfOccurrences;
 
-    public SyntacticNgram(String head_word,   String type, String typeInSentence,Long position ){
+    public SyntacticNgram(String head_word,   String type, String typeInSentence,Long position, Long numOfOccurrences ){
 
         this.head_word = head_word;
         this.type = type;
         this.typeInSentence = typeInSentence;
         this.position = position;
+        this.numOfOccurrences = numOfOccurrences;
 
     }
 
@@ -33,6 +34,7 @@ public class SyntacticNgram implements WritableComparable<SyntacticNgram>  {
         this.type = "";
         this.typeInSentence = "";
         this.position=0L;
+        this.numOfOccurrences = 0L;
     }
 
     @Override

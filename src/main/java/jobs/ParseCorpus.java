@@ -25,41 +25,15 @@ public class ParseCorpus {
 
     public static class MapperClass extends Mapper<LongWritable, Text, DependencyPath, NounPair> {
 
-        private Set<String> NounWords = new HashSet<>();
-        //this file will be a file of all the types we want to have
-        //https://www.ling.upenn.edu/courses/Fall_2003/ling001/penn_treebank_pos.html
-        //from there we will ask if the value (description) have the word "noun", if so go for it, else, ignore
-
-
-        protected void setup(Mapper.Context context) throws IOException {
-
-            URI[] localPaths = context.getCacheFiles();
-
-            if (localPaths.length == 1) {
-                URI stopWordsUri = localPaths[0];
-                try {
-                    BufferedReader fis = new BufferedReader(new FileReader(new File(stopWordsUri.getPath()).getName()));
-                    String pattern;
-                    while ((pattern = fis.readLine()) != null) {
-                        NounWords.add(pattern);
-                    }
-                } catch (IOException ioe) {
-                    System.err.println("Caught exception while parsing the cached file '"
-                            + stopWordsUri + "' : " + StringUtils.stringifyException(ioe));
-                }
-
-            }
-        }
-
-
         @Override
         public void map(LongWritable lineId, Text line, Mapper.Context context) {
             //Todo: split by tab like assignment2
             String [] words = line.toString().split("\\t");
             String head_word = words[0];
             String syntactic_ngram_String = words[1];
+            long total_count;
             try{
-                long total_count = Long.parseLong(words[2]);
+                total_count = Long.parseLong(words[2]);
             }
             catch (NumberFormatException e)
             {
@@ -67,18 +41,19 @@ public class ParseCorpus {
             }
            String [] syntactic_ngram_String_array= syntactic_ngram_String.split(" ");
 
-            SyntacticNgram [] synArray = (SyntacticNgram[]) Arrays.stream(syntactic_ngram_String_array).map(x ->{
-               String [] splitter =   x.split("/");
-               //add here num of occurrences
-               return new SyntacticNgram(splitter[0],splitter[1],splitter[2],Long.parseLong(splitter[3]));
-           }).toArray();
+            SyntacticNgram [] synArray = new SyntacticNgram[syntactic_ngram_String_array.length];
+             for (int i=0 ; i< synArray.length; i++){
+                String [] splitter = syntactic_ngram_String_array[i].split("/");
+                //add here num of occurrences
+                synArray[i] = new SyntacticNgram(splitter[0],splitter[1],splitter[2],Long.parseLong(splitter[3]),total_count);
+            }
             for (SyntacticNgram syntacticNgram : synArray) {
                 try {
                     if((syntacticNgram.type.contains("NN")))
                     //TODO: do it better with the NounWords abocve
                     {
                         //if the other word is noun - add it, else, ignore
-                        context.write(new DependencyPath(syntacticNgram.type,syntacticNgram.typeInSentence,syntacticNgram.position),
+                        context.write(new DependencyPath(new Text(syntacticNgram.typeInSentence)),
                                 new NounPair(head_word,syntacticNgram.head_word,syntacticNgram.numOfOccurrences));
                         //now we can "create" an  output with the splitter object and the head_word
                     }
@@ -108,21 +83,19 @@ public class ParseCorpus {
             }
         } */
 
-    public static String removeLastChar(String s) {
+  /*  public static String removeLastChar(String s) {
         return (s == null || s.length() == 0)
                 ? null
                 : (s.substring(0, s.length() - 1));
-    }
+    } */
         public static class ReducerClass extends Reducer<DependencyPath, NounPair, DependencyPath,Text> {
-
-            private long DMmin;
-
+            private long DPmin;
 
             private Counter featureLexiconSizeCounter ;
 
             @Override
             public void setup(Context context) {
-                DMmin = context.getConfiguration().getLong("DMmin", 5);
+                DPmin = context.getConfiguration().getLong("DPmin", 5);
                 featureLexiconSizeCounter = context.getCounter(CounterType.FEATURE_LEXICON);
             }
 
@@ -137,7 +110,7 @@ public class ParseCorpus {
                     valueString.append(value.toString()).append("\t");
 
                 }
-                if(counter > DMmin) {
+                if(counter >=  DPmin) {
                     featureLexiconSizeCounter.increment(1);
                     context.write(path, new Text(valueString.substring(0, valueString.length() - 1)));
                 }
@@ -148,9 +121,6 @@ public class ParseCorpus {
                 to write it to the context...
                 */
 
-
-                //put it before you write something to the context, so we would know it's size
-//                featureLexiconSizeCounter.increment(1);
 
             }
         }

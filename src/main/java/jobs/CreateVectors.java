@@ -29,7 +29,7 @@ public class CreateVectors {
                 String [] nouns = splitLine[i].split(",");
                 if (nouns.length  == 3 )
                     //not final - need fix according to changes in DependencyPath class
-                    context.write(new NounPair(nouns[0],nouns[1],Long.parseLong(nouns[2])),new DependencyPath(lineId.get(),splitPath[0],splitPath[1],Long.parseLong(splitPath[3])));
+                    context.write(new NounPair(nouns[0],nouns[1],Long.parseLong(nouns[2])),new DependencyPath(new LongWritable(lineId.get()),new Text(splitPath[0])));
             }
         }
     }
@@ -79,16 +79,21 @@ public class CreateVectors {
         public void reduce(NounPair nounPair, Iterable<DependencyPath> paths, Context context)
                 throws IOException, InterruptedException {
 
-            Vector<Integer> featureVector = new Vector((int)featureLexiconSize);
 
-            if (paths.iterator().hasNext() && paths.iterator().next().isFake() && nounPair.isHypernym != null){
+            if (paths.iterator().hasNext() && paths.iterator().next().isFake() && nounPair.isHypernym != null) {
+
+                Vector<Integer> featureVector = new Vector((int)featureLexiconSize);
 
                 for (DependencyPath path : paths){
-                    Integer curr = featureVector.get(path.idInVector.intValue());
-                    featureVector.set(path.idInVector.intValue(),curr + nounPair.numOfOccurrences.intValue());
+                    Integer curr = featureVector.get((int) path.idInVector.get());
+                    //featureVector.set((int)path.idInVector.get(),curr + (int) nounPair.numOfOccurrences.get());
+                    featureVector.set((int)path.idInVector.get(),curr + 1);
                 }
 
-                context.write(new Text(featureVector.toString()),new BooleanWritable(nounPair.isHypernym));
+                if (featureVector.size() > 0) {
+                    context.write(new Text(featureVector.toString()), nounPair.isHypernym);
+                }
+
             }
         }
     }

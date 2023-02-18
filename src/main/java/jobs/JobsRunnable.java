@@ -32,7 +32,7 @@ public class JobsRunnable {
 
     public static void main(String[] args) throws IOException {
 
-        if (args.length < 3) {
+        if (args.length < 4) {
             System.err.println(
                     "Wrong argument count received.\nExpected <corpus-path> <bucket path> <stop words path>.");
             System.exit(1);
@@ -40,11 +40,12 @@ public class JobsRunnable {
 
         System.out.println("args length is "+args.length);
         corpusPath = args[0];
-        System.out.println("arg number 0: "+corpusPath);
+        System.out.println("arg number 1: "+corpusPath);
         bucketPath = args[1];
-        System.out.println("arg number 1: "+bucketPath);
+        System.out.println("arg number 2: "+bucketPath);
         System.out.println(bucketPath);
-        DPmin = Long.parseLong(args[2]);
+        hypernymPath = args[2];
+        DPmin = Long.parseLong(args[3]);
         System.out.println("arg number 2: "+DPmin);
         System.out.println(DPmin);
 
@@ -52,7 +53,7 @@ public class JobsRunnable {
         // Split Corpus
         Configuration parseCorpusLinesConfig = new Configuration();
         parseCorpusLinesConfig.setLong("DPmin",DPmin);
-        final Job parseCorpus = Job.getInstance(parseCorpusLinesConfig, "Parse Corpus Lines");
+        final Job parseCorpus = Job.getInstance(parseCorpusLinesConfig, "Parse Corpus");
         String parseCorpusPath = createParseCorpusJob(parseCorpus, corpusPath);
         waitForJobCompletion(parseCorpus, parseCorpusPath);
 
@@ -64,9 +65,9 @@ public class JobsRunnable {
         //Create Vectors
         Configuration createVectorsConfig = new Configuration();
         createVectorsConfig.setLong("featureLexiconSize",featureLexiconSize);
-        final Job constructCalculationVariables = Job.getInstance(createVectorsConfig, "Construct calculation variables");
-        String constructCalculationVariablePath = createCreateVectorsJob(constructCalculationVariables, corpusPath,hypernymPath);
-        waitForJobCompletion(constructCalculationVariables, constructCalculationVariablePath);
+        final Job createVectors = Job.getInstance(createVectorsConfig, "Create Vectors");
+        String createVectorsPath = createCreateVectorsJob(createVectors, parseCorpusPath,hypernymPath);
+        waitForJobCompletion(createVectors, createVectorsPath);
     }
 
 
@@ -89,18 +90,17 @@ public class JobsRunnable {
 
     private static String createParseCorpusJob(Job job, String corpusPath) throws
             IOException {
-        job.setInputFormatClass(SequenceFileInputFormat.class);
+        //job.setInputFormatClass(SequenceFileInputFormat.class);
         job.setJarByClass(ParseCorpus.class);
         job.setMapperClass(ParseCorpus.MapperClass.class);
-        //job.addCacheFile(new Path(stopWordsPath).toUri());
         /*if (shouldOperateLocalAggregation) {
             job.setCombinerClass(ParseCorpusLines.CombinerClass.class);
         } */
         job.setReducerClass(ParseCorpus.ReducerClass.class);
-        job.setMapOutputKeyClass(Text.class);
-        job.setMapOutputValueClass(DependencyPath.class);
-        job.setOutputKeyClass(Text.class);
-        job.setOutputValueClass(DependencyPath.class);
+        job.setMapOutputKeyClass(DependencyPath.class);
+        job.setMapOutputValueClass(NounPair.class);
+        job.setOutputKeyClass(DependencyPath.class);
+        job.setOutputValueClass(Text.class);
         job.setOutputFormatClass(TextOutputFormat.class);
         return setInputOutput(job, corpusPath, false);
     }
