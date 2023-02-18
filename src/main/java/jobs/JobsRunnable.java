@@ -44,6 +44,10 @@ public class JobsRunnable {
         bucketPath = args[1];
         System.out.println("arg number 1: "+bucketPath);
         System.out.println(bucketPath);
+        DPmin = Long.parseLong(args[2]);
+        System.out.println("arg number 2: "+DPmin);
+        System.out.println(DPmin);
+
 
         // Split Corpus
         Configuration parseCorpusLinesConfig = new Configuration();

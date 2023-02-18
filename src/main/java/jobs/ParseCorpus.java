@@ -137,7 +137,7 @@ public class ParseCorpus {
                     valueString.append(value.toString()).append("\t");
 
                 }
-                if(counter>DMmin) {
+                if(counter > DMmin) {
                     featureLexiconSizeCounter.increment(1);
                     context.write(path, new Text(valueString.substring(0, valueString.length() - 1)));
                 }
