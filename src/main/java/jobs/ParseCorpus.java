@@ -9,27 +9,45 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.hadoop.util.StringUtils;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.net.URI;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
+import javax.script.*;
+import java.io.*;
 
 public class ParseCorpus {
 
-    public static class MapperClass extends Mapper<LongWritable, Text, DependencyPath, NounPair> {
 
+    public static class MapperClass extends Mapper<LongWritable, Text, DependencyPath, NounPair> {
+        public static String runpythonScript(String[] args) throws Exception {
+            StringWriter writer = new StringWriter();
+            ScriptContext context = new SimpleScriptContext();
+
+            context.setWriter(writer);
+
+            ScriptEngineManager manager = new ScriptEngineManager();
+            System.out.println(manager.getEngineFactories().toString());
+            ScriptEngine engine = manager.getEngineByName("python");
+            Bindings bindings = engine.createBindings();
+            bindings.put("args", args);
+            context.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
+            engine.eval(new FileReader(resolvePythonScriptPath("hello.py")), context);
+            return writer.toString().trim();
+        }
+        private static String resolvePythonScriptPath(String path){
+            File file = new File(path);
+            return file.getAbsolutePath();
+        }
         @Override
         public void map(LongWritable lineId, Text line, Mapper.Context context) {
             //Todo: split by tab like assignment2
             String [] words = line.toString().split("\\t");
             String head_word = words[0];
+            String[] arrayString = new String[1];
+            arrayString[0] = head_word;
+            try {
+                head_word =  runpythonScript(arrayString);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
             String syntactic_ngram_String = words[1];
             long total_count;
             try{
@@ -52,9 +70,18 @@ public class ParseCorpus {
                     if((syntacticNgram.type.contains("NN")))
                     //TODO: do it better with the NounWords abocve
                     {
+                        String syntacticNgram_head_Word;
+                        String[] arrayToString = new String[1];
+                        arrayToString[0] = syntacticNgram.head_word;
+                        try {
+                            syntacticNgram_head_Word =  runpythonScript(arrayString);
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+
                         //if the other word is noun - add it, else, ignore
                         context.write(new DependencyPath(new Text(syntacticNgram.typeInSentence)),
-                                new NounPair(head_word,syntacticNgram.head_word,syntacticNgram.numOfOccurrences));
+                                new NounPair(head_word,syntacticNgram_head_Word,syntacticNgram.numOfOccurrences));
                         //now we can "create" an  output with the splitter object and the head_word
                     }
 
