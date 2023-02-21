@@ -92,6 +92,14 @@ public class ParseCorpus {
                 }
             }
         }
+        private static Text CreateText(ArrayList<SyntacticNgram>path)
+        {
+            String stToText = "";
+            for (int i = 0; i < path.size(); i++) {
+                stToText += path.get(i).type + "/" +path.get(i).typeInSentence+ " ";
+            }
+            return (new Text(stToText));
+        }
 
         private static void DFSSyntatticNgram(List<List<SyntacticNgram>> typeInSentencesTree, ArrayList<SyntacticNgram> path, int lastLevel, int CurrentindexInLevel, int currentLevel, SyntacticNgram lastSyn,Mapper.Context context,long numOfOccurrences) throws Exception {
             if (currentLevel >= lastLevel) {
@@ -104,8 +112,9 @@ public class ParseCorpus {
                     arrayString[0] = path.get(0).head_word;
                     String[] arrayString2 = new String[1];
                     arrayString2[0] = lastSyn.head_word;
-                   String stringText =  String.join(path.toString(), " ");
-                    context.write(new DependencyPath(new Text(stringText)),
+
+
+                    context.write(new DependencyPath(CreateText(path)),
                             new NounPair(runpythonScript(arrayString), runpythonScript(arrayString2),numOfOccurrences));
                     return;
                 }
