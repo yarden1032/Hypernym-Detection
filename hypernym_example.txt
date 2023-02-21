@@ -1,0 +1,3 @@
+comoros	territory	True
+motility	movement	True
+difficulty	chart	False

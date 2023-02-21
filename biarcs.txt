@@ -1,0 +1,4 @@
+experience	that/IN/compl/3 patients/NNS/nsubj/3 experience/VB/ccomp/0	3092
+experience	very/NN/advmod/2 good/NN/amod/3 experience/NN/attr/0	1400
+experienced	experienced/VBD/ROOT/0 great/JJ/amod/3 difficulty/NN/dobj/1	4758
+dispersion	chart/NN/amod/3 difficulty/NN/dobj/1	4758
