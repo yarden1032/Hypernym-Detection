@@ -19,6 +19,7 @@ public class DependencyPath implements WritableComparable<DependencyPath> {
 
     public BooleanWritable isReal;
 
+   // public Text numOfOccurrences;
     public LongWritable numOfOccurrences;
 
 
@@ -46,14 +47,14 @@ public class DependencyPath implements WritableComparable<DependencyPath> {
         idInVector = new LongWritable(-1L);
         typeInSentence = new Text("");
         isReal = new BooleanWritable(false);
-        numOfOccurrences = new LongWritable();
+        numOfOccurrences = new LongWritable ();
     }
 
     public DependencyPath (Text path) {
         idInVector = new LongWritable(-1L);
         typeInSentence = path;
         isReal = new BooleanWritable(false);
-        numOfOccurrences = new LongWritable();
+        numOfOccurrences = new LongWritable ();
     }
 
 
@@ -121,7 +122,7 @@ public class DependencyPath implements WritableComparable<DependencyPath> {
     }
 
     @Override
-    public String toString() { return typeInSentence.toString() + "\t" + numOfOccurrences.get() + "\t" + idInVector.get(); }
+    public String toString() { return typeInSentence.toString() + "\t" + numOfOccurrences + "\t" + idInVector.get(); }
 
     public void setIdInVector (long id){
         idInVector = new LongWritable(id);

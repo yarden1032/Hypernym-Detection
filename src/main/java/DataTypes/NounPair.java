@@ -20,7 +20,7 @@ public class NounPair
 
     public BooleanWritable isHypernym;
 
-    public NounPair(String word1, String word2,Long numOfOccurrences){
+    public NounPair(String word1, String word2){
 
         this.word1 = new Text(word1);
 
@@ -32,7 +32,7 @@ public class NounPair
 
     }
 
-    public NounPair(String word1, String word2,Long numOfOccurrences,boolean isHypernym){
+    public NounPair(String word1, String word2 ,boolean isHypernym){
 
         this.word1 = new Text(word1);
 

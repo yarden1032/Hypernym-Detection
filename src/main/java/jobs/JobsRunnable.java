@@ -63,11 +63,11 @@ public class JobsRunnable {
 
 
         //Create Vectors
-        /* Configuration createVectorsConfig = new Configuration();
+         Configuration createVectorsConfig = new Configuration();
         createVectorsConfig.setLong("featureLexiconSize",featureLexiconSize);
         final Job createVectors = Job.getInstance(createVectorsConfig, "Create Vectors");
         String createVectorsPath = createCreateVectorsJob(createVectors, parseCorpusPath,hypernymPath);
-        waitForJobCompletion(createVectors, createVectorsPath); */
+        waitForJobCompletion(createVectors, createVectorsPath);
     }
 
 
@@ -102,7 +102,7 @@ public class JobsRunnable {
         job.setMapOutputValueClass(NounPair.class);
         job.setOutputKeyClass(DependencyPath.class);
         job.setOutputValueClass(Text.class);
-        job.setOutputFormatClass(TextOutputFormat.class);
+        //job.setOutputFormatClass(TextOutputFormat.class);
         return setInputOutput(job, corpusPath, false);
     }
 

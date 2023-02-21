@@ -4,7 +4,6 @@ import DataTypes.CounterType;
 import DataTypes.DependencyPath;
 import DataTypes.NounPair;
 import DataTypes.SyntacticNgram;
-import com.amazonaws.services.elasticbeanstalk.model.ElasticBeanstalkServiceException;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Counter;
@@ -15,8 +14,6 @@ import org.apache.hadoop.mapreduce.Reducer;
 import javax.script.*;
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 
 public class ParseCorpus {
@@ -115,8 +112,8 @@ public class ParseCorpus {
                     arrayString[0] = path.get(0).head_word;
                     String[] arrayString2 = new String[1];
                     arrayString2[0] = lastSyn.head_word;
-                    context.write(new DependencyPath(CreateText(path)),
-                            new NounPair(path.get(0).head_word,lastSyn.head_word,numOfOccurrences));
+                    context.write(new DependencyPath(CreateText(path),new LongWritable(numOfOccurrences)),
+                            new NounPair(path.get(0).head_word,lastSyn.head_word));
                             //new NounPair(runpythonScript(arrayString), runpythonScript(arrayString2), numOfOccurrences));
                     return;
                 }
@@ -139,6 +136,11 @@ public class ParseCorpus {
                     DFSSyntatticNgram(typeInSentencesTree, path, lastLevel, CurrentindexInLevel + 1, currentLevel, lastSyn, context, numOfOccurrences);
             }
         }
+
+        @Override
+        protected void cleanup(Mapper<LongWritable, Text, DependencyPath, NounPair>.Context context) throws IOException, InterruptedException {
+            System.out.println("done map");
+        }
     }
 
     public static class PartitionerClass extends Partitioner<DependencyPath, NounPair> {
@@ -148,19 +150,7 @@ public class ParseCorpus {
             return (key.hashCode() & 0xFFFFFFF) % numPartitions; // Make sure that equal occurrences will end up in same reducer
         }
     }
-     /*   public static class CombinerClass extends Reducer<Text, dependencyPath, Text, dependencyPath> {
 
-            @Override
-            public void reduce(Text threeGram, Iterable<dependencyPath> occurrencesList, Context context) throws IOException, InterruptedException {
-
-            }
-        } */
-
-    /*  public static String removeLastChar(String s) {
-          return (s == null || s.length() == 0)
-                  ? null
-                  : (s.substring(0, s.length() - 1));
-      } */
     public static class ReducerClass extends Reducer<DependencyPath, NounPair, DependencyPath, Text> {
         private long DPmin;
 
@@ -188,14 +178,6 @@ public class ParseCorpus {
                     path.setIdInVector(featureLexiconSizeCounter.getValue());
                     context.write(path, new Text(valueString.substring(0, valueString.length() - 1)));
                 }
-                /*Roni - not sure if the output type should be Text or something else, but we want to create a list of all the noun pairs.
-                 the format should be - key: <dependency path> value: <noun pair<TAB>noun pair<TAB>noun pair<TAB>....>
-                the pairs would be split by tab and the nouns inside the pairs would be split by comma "," .
-                remember to check here th DPmin - if a path does not appear more than DPmin times there is no need
-                to write it to the context...
-                */
-
-
         }
     }
 

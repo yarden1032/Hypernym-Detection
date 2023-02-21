@@ -25,14 +25,14 @@ public class CreateVectors {
 
             String[] splitLine = line.toString().split("\\t");
             String path = splitLine[0];
-            String[] splitPath = path.split(" ");
+         //   String[] splitPath = path.split(" ");
             String numOfOccurrencesPerPath = splitLine[1];
             String pathId = splitLine[2];
             for (int i=3;i<splitLine.length;i++){
                 String [] nouns = splitLine[i].split(",");
                 if (nouns.length  == 2 )
                     //not final - need fix according to changes in DependencyPath class
-                    context.write(new NounPair(nouns[0],nouns[1],Long.parseLong(numOfOccurrencesPerPath)),new DependencyPath(new LongWritable(Long.parseLong(pathId)),new Text(splitPath[0]),new LongWritable(Long.parseLong(splitLine[1]))));
+                    context.write(new NounPair(nouns[0],nouns[1]),new DependencyPath(new LongWritable(Long.parseLong(pathId)),new Text(path),new LongWritable(Long.parseLong(numOfOccurrencesPerPath))));
             }
         }
     }
@@ -53,7 +53,7 @@ public class CreateVectors {
                 String noun2 = splitLine[1];
                 String isHypernym = splitLine[2];
 
-                context.write(new NounPair(noun1,noun2,0L,(isHypernym.equals("True"))),new DependencyPath());
+                context.write(new NounPair(noun1,noun2,(isHypernym.equals("True"))),new DependencyPath());
             }
         }
     }
@@ -90,22 +90,32 @@ public class CreateVectors {
         public void reduce(NounPair nounPair, Iterable<DependencyPath> paths, Context context)
                 throws IOException, InterruptedException {
 
-                Vector<Integer> featureVector = new Vector();
+            Vector<Integer> featureVector = new Vector();
 
-              for (DependencyPath currPath : paths){
+            boolean isFromHypernymFile = false;
+
+            for (DependencyPath currPath : paths){
                     int vectorId = (int) currPath.idInVector.get();
                     if (vectorId != -1) {
                         featureVector.setSize((int) featureLexiconSize);
                         try {
                             Integer curr = featureVector.get(vectorId);
-                            featureVector.set((int) currPath.idInVector.get(), curr + (int) currPath.numOfOccurrences.get());
+                            if (curr != null) {
+                                featureVector.set(vectorId -1 , curr + (int) currPath.numOfOccurrences.get());
+                            }
+                            else{
+                                featureVector.set(vectorId -1 ,(int) currPath.numOfOccurrences.get());
+                            }
                         } catch (Exception ex){
-                            featureVector.set(vectorId -1 , (int) currPath.numOfOccurrences.get());
+                            featureVector.set(vectorId -1 ,(int) currPath.numOfOccurrences.get());
                         }
                     }
-                }
+                    else{
+                        isFromHypernymFile = true;
+                    }
 
-                if (featureVector.size() > 0) {
+                }
+                if (featureVector.size() > 0 && isFromHypernymFile) {
                     for (int i = 0; i < featureVector.size() ; i ++){
                         if (featureVector.get(i) == null){
                             featureVector.set(i,0);
