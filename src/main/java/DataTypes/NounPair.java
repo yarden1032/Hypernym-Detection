@@ -89,6 +89,11 @@ public class NounPair
     }
 
     @Override
+    public int hashCode() {
+        return word1.hashCode() + word2.hashCode();
+    }
+
+    @Override
     public String toString() {
         return word1.toString() + ',' + word2.toString();
     }

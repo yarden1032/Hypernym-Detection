@@ -6,6 +6,7 @@ import org.apache.hadoop.io.BooleanWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Partitioner;
 import org.apache.hadoop.mapreduce.Reducer;
 
 import java.io.IOException;
@@ -25,11 +26,13 @@ public class CreateVectors {
             String[] splitLine = line.toString().split("\\t");
             String path = splitLine[0];
             String[] splitPath = path.split(" ");
-            for (int i=1;i<splitLine.length;i++){
+            String numOfOccurrencesPerPath = splitLine[1];
+            String pathId = splitLine[2];
+            for (int i=3;i<splitLine.length;i++){
                 String [] nouns = splitLine[i].split(",");
-                if (nouns.length  == 3 )
+                if (nouns.length  == 2 )
                     //not final - need fix according to changes in DependencyPath class
-                    context.write(new NounPair(nouns[0],nouns[1],Long.parseLong(nouns[2])),new DependencyPath(new LongWritable(lineId.get()),new Text(splitPath[0])));
+                    context.write(new NounPair(nouns[0],nouns[1],Long.parseLong(numOfOccurrencesPerPath)),new DependencyPath(new LongWritable(Long.parseLong(pathId)),new Text(splitPath[0]),new LongWritable(Long.parseLong(splitLine[1]))));
             }
         }
     }
@@ -65,6 +68,14 @@ public class CreateVectors {
         }
     }
 
+    public static class PartitionerClass extends Partitioner<NounPair,DependencyPath> {
+
+        @Override
+        public int getPartition(NounPair key, DependencyPath value, int numPartitions) {
+            return (key.hashCode() & 0xFFFFFFF) % numPartitions; // Make sure that equal occurrences will end up in same reducer
+        }
+    }
+
 
     public static class ReducerClass extends Reducer<NounPair, DependencyPath, Text, BooleanWritable> {
 
@@ -79,22 +90,29 @@ public class CreateVectors {
         public void reduce(NounPair nounPair, Iterable<DependencyPath> paths, Context context)
                 throws IOException, InterruptedException {
 
+                Vector<Integer> featureVector = new Vector();
 
-            if (paths.iterator().hasNext() && paths.iterator().next().isFake() && nounPair.isHypernym != null) {
-
-                Vector<Integer> featureVector = new Vector((int)featureLexiconSize);
-
-                for (DependencyPath path : paths){
-                    Integer curr = featureVector.get((int) path.idInVector.get());
-                    //featureVector.set((int)path.idInVector.get(),curr + (int) nounPair.numOfOccurrences.get());
-                    featureVector.set((int)path.idInVector.get(),curr + 1);
+              for (DependencyPath currPath : paths){
+                    int vectorId = (int) currPath.idInVector.get();
+                    if (vectorId != -1) {
+                        featureVector.setSize((int) featureLexiconSize);
+                        try {
+                            Integer curr = featureVector.get(vectorId);
+                            featureVector.set((int) currPath.idInVector.get(), curr + (int) currPath.numOfOccurrences.get());
+                        } catch (Exception ex){
+                            featureVector.set(vectorId -1 , (int) currPath.numOfOccurrences.get());
+                        }
+                    }
                 }
 
                 if (featureVector.size() > 0) {
+                    for (int i = 0; i < featureVector.size() ; i ++){
+                        if (featureVector.get(i) == null){
+                            featureVector.set(i,0);
+                        }
+                    }
                     context.write(new Text(featureVector.toString()), nounPair.isHypernym);
                 }
-
             }
         }
     }
-}

@@ -63,11 +63,11 @@ public class JobsRunnable {
 
 
         //Create Vectors
-        Configuration createVectorsConfig = new Configuration();
+        /* Configuration createVectorsConfig = new Configuration();
         createVectorsConfig.setLong("featureLexiconSize",featureLexiconSize);
         final Job createVectors = Job.getInstance(createVectorsConfig, "Create Vectors");
         String createVectorsPath = createCreateVectorsJob(createVectors, parseCorpusPath,hypernymPath);
-        waitForJobCompletion(createVectors, createVectorsPath);
+        waitForJobCompletion(createVectors, createVectorsPath); */
     }
 
 
@@ -96,6 +96,7 @@ public class JobsRunnable {
         /*if (shouldOperateLocalAggregation) {
             job.setCombinerClass(ParseCorpusLines.CombinerClass.class);
         } */
+       // job.setPartitionerClass(ParseCorpus.PartitionerClass.class);
         job.setReducerClass(ParseCorpus.ReducerClass.class);
         job.setMapOutputKeyClass(DependencyPath.class);
         job.setMapOutputValueClass(NounPair.class);

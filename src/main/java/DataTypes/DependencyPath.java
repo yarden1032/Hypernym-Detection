@@ -19,20 +19,25 @@ public class DependencyPath implements WritableComparable<DependencyPath> {
 
     public BooleanWritable isReal;
 
-    public DependencyPath(Text typeInSentence) {
+    public LongWritable numOfOccurrences;
+
+
+    public DependencyPath(Text typeInSentence,LongWritable numOfOccurrences) {
 
 //        this.type = type;
         this.typeInSentence = typeInSentence;
  //       this.direction = direction;
         this.idInVector = new LongWritable(-1L);
+        this.numOfOccurrences = numOfOccurrences;
         isReal = new BooleanWritable(true);
     }
 
-    public DependencyPath(LongWritable idInVector, Text typeInSentence) {
+    public DependencyPath(LongWritable idInVector, Text typeInSentence, LongWritable numOfOccurrences) {
 
         this.idInVector = idInVector;
         this.typeInSentence = typeInSentence;
         isReal = new BooleanWritable(true);
+        this.numOfOccurrences = numOfOccurrences;
     }
 
 
@@ -41,6 +46,14 @@ public class DependencyPath implements WritableComparable<DependencyPath> {
         idInVector = new LongWritable(-1L);
         typeInSentence = new Text("");
         isReal = new BooleanWritable(false);
+        numOfOccurrences = new LongWritable();
+    }
+
+    public DependencyPath (Text path) {
+        idInVector = new LongWritable(-1L);
+        typeInSentence = path;
+        isReal = new BooleanWritable(false);
+        numOfOccurrences = new LongWritable();
     }
 
 
@@ -55,6 +68,8 @@ public class DependencyPath implements WritableComparable<DependencyPath> {
 
         //direction.write(dataOutput);
 
+        numOfOccurrences.write(dataOutput);
+
         isReal.write(dataOutput);
     }
 
@@ -68,6 +83,8 @@ public class DependencyPath implements WritableComparable<DependencyPath> {
 
         isReal.readFields(dataInput);
 
+        numOfOccurrences.readFields(dataInput);
+
     }
 
     @Override
@@ -75,14 +92,20 @@ public class DependencyPath implements WritableComparable<DependencyPath> {
 
         //edit here the comparison so that the fake path will appear first in the reducer and the other will be orderd
         //by their id
-        if (idInVector != null) {
-            if (isFake() && !isFake()) {
+        int firstComparison = insideComparison(other);
+        if (firstComparison == 0) {
+            if (isFake() && !other.isFake()) {
                 return 1;
-            } else if (!isFake() && isFake()) {
+            } else if (!isFake() && other.isFake()) {
                 return -1;
             }
+            else{
+                return 0;
+            }
         }
-        return insideComparison(other);
+        else {
+            return firstComparison;
+        }
     }
 
     private int insideComparison(DependencyPath other) {
@@ -93,7 +116,16 @@ public class DependencyPath implements WritableComparable<DependencyPath> {
     }
 
     @Override
-    public String toString() { return typeInSentence.toString(); }
+    public int hashCode() {
+        return typeInSentence.hashCode();
+    }
+
+    @Override
+    public String toString() { return typeInSentence.toString() + "\t" + numOfOccurrences.get() + "\t" + idInVector.get(); }
+
+    public void setIdInVector (long id){
+        idInVector = new LongWritable(id);
+    }
 
 }
 

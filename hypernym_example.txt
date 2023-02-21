@@ -1,0 +1,3 @@
+comoros	territory	True
+motility	movement	True
+dispersion	chart	False
