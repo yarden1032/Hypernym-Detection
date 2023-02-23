@@ -96,7 +96,7 @@ public class CreateVectors {
 
             for (DependencyPath currPath : paths){
                     int vectorId = (int) currPath.idInVector.get();
-                    if (vectorId != -1) {
+                    if (vectorId != 0) {
                         featureVector.setSize((int) featureLexiconSize);
                         try {
                             Integer curr = featureVector.get(vectorId);

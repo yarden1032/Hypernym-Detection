@@ -19,16 +19,13 @@ public class DependencyPath implements WritableComparable<DependencyPath> {
 
     public BooleanWritable isReal;
 
-   // public Text numOfOccurrences;
     public LongWritable numOfOccurrences;
 
 
     public DependencyPath(Text typeInSentence,LongWritable numOfOccurrences) {
 
-//        this.type = type;
         this.typeInSentence = typeInSentence;
- //       this.direction = direction;
-        this.idInVector = new LongWritable(-1L);
+        this.idInVector = new LongWritable();
         this.numOfOccurrences = numOfOccurrences;
         isReal = new BooleanWritable(true);
     }
@@ -44,14 +41,14 @@ public class DependencyPath implements WritableComparable<DependencyPath> {
 
     //this constructor builds fake dependency path
     public DependencyPath() {
-        idInVector = new LongWritable(-1L);
+        idInVector = new LongWritable();
         typeInSentence = new Text("");
         isReal = new BooleanWritable(false);
         numOfOccurrences = new LongWritable ();
     }
 
     public DependencyPath (Text path) {
-        idInVector = new LongWritable(-1L);
+        idInVector = new LongWritable();
         typeInSentence = path;
         isReal = new BooleanWritable(false);
         numOfOccurrences = new LongWritable ();
@@ -61,30 +58,29 @@ public class DependencyPath implements WritableComparable<DependencyPath> {
     @Override
     public void write(DataOutput dataOutput) throws IOException {
 
+        dataOutput.writeLong(idInVector.get());
 
-        idInVector.write(dataOutput);
-
+        dataOutput.writeLong(numOfOccurrences.get());
 
         typeInSentence.write(dataOutput);
 
-        //direction.write(dataOutput);
-
-        numOfOccurrences.write(dataOutput);
-
         isReal.write(dataOutput);
+
+
+
     }
 
     @Override
     public void readFields(DataInput dataInput) throws IOException {
 
+        idInVector = new LongWritable(dataInput.readLong());
 
-        idInVector.readFields(dataInput);
+        numOfOccurrences = new LongWritable(dataInput.readLong());
 
         typeInSentence.readFields(dataInput);
 
         isReal.readFields(dataInput);
 
-        numOfOccurrences.readFields(dataInput);
 
     }
 
