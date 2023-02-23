@@ -2,3 +2,8 @@ experience	that/IN/compl/3 patients/NNS/nsubj/3 experience/VB/ccomp/0	3092
 experience	very/NN/advmod/2 good/NN/amod/3 experience/NN/attr/0	1400
 experienced	experienced/VBD/ROOT/0 great/JJ/amod/3 difficulty/NN/dobj/1	4758
 dispersion	chart/NN/amod/3 difficulty/NN/dobj/1	4758
+experience	blood/NN/advmod/2 descent/NN/amod/3 experience/NN/attr/0	1536
+experienced	prospect/VBD/ROOT/0 great/JJ/amod/3 nuptials/NN/dobj/1	1759
+dispersion	breakthrough/NN/amod/3 foundation/NN/dobj/1	2256
+experience	channel/IN/compl/3 patients/NNS/nsubj/3 line/VB/ccomp/0	1937
+experience	teeth/NN/advmod/2 good/NN/amod/3 cog/NN/attr/0	5748

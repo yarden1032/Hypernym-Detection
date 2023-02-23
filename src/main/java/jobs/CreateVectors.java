@@ -25,7 +25,6 @@ public class CreateVectors {
 
             String[] splitLine = line.toString().split("\\t");
             String path = splitLine[0];
-         //   String[] splitPath = path.split(" ");
             String numOfOccurrencesPerPath = splitLine[1];
             String pathId = splitLine[2];
             for (int i=3;i<splitLine.length;i++){
@@ -37,9 +36,7 @@ public class CreateVectors {
         }
     }
 
-
-    //need to sort so the result of this job will appear first in the reducer
-    //the mapper will send the reduce the pair and the boolean classification
+    /**the mapper will send the reduce the pair and the boolean classification **/
     public static class HypernymMapperClass extends Mapper<LongWritable, Text, NounPair, DependencyPath> {
 
         protected void setup(Mapper context) throws IOException { }
@@ -59,14 +56,14 @@ public class CreateVectors {
     }
 
 
-    public static class CombinerClass extends Reducer<NounPair, DependencyPath,NounPair, DependencyPath> {
+  /*  public static class CombinerClass extends Reducer<NounPair, DependencyPath,NounPair, DependencyPath> {
 
         //should sum up together all the occurrences of same noun pair;
         @Override
         public void reduce(NounPair nounPair, Iterable<DependencyPath> paths, Context context) throws IOException, InterruptedException {
             //think about it...
         }
-    }
+    } */
 
     public static class PartitionerClass extends Partitioner<NounPair,DependencyPath> {
 

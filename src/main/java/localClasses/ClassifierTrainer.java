@@ -1,6 +1,7 @@
 package localClasses;
 
 import weka.classifiers.Classifier;
+import weka.classifiers.bayes.NaiveBayes;
 import weka.classifiers.bayes.NaiveBayesUpdateable;
 import weka.classifiers.trees.M5P;
 import weka.core.Instances;
@@ -21,19 +22,9 @@ public class ClassifierTrainer {
 
     public static Classifier buildClassifier(Instances data, boolean isIncremental) throws Exception {
 
-        M5P tree = new M5P();         // new instance of tree
-        tree.buildClassifier(data);
-
-       /* if (isIncremental) {
-            data.stream().forEach(dataLine -> {
-                try {
-                    tree.updateClassifier(dataLine);
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            });
-        } */
-        return tree;
+        NaiveBayes classifier = new NaiveBayes();
+        classifier.buildClassifier(data);
+        return classifier;
     }
 
 }

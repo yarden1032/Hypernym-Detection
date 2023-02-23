@@ -93,10 +93,6 @@ public class JobsRunnable {
         //job.setInputFormatClass(SequenceFileInputFormat.class);
         job.setJarByClass(ParseCorpus.class);
         job.setMapperClass(ParseCorpus.MapperClass.class);
-        /*if (shouldOperateLocalAggregation) {
-            job.setCombinerClass(ParseCorpusLines.CombinerClass.class);
-        } */
-       // job.setPartitionerClass(ParseCorpus.PartitionerClass.class);
         job.setReducerClass(ParseCorpus.ReducerClass.class);
         job.setMapOutputKeyClass(DependencyPath.class);
         job.setMapOutputValueClass(NounPair.class);

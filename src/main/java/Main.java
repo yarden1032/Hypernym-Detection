@@ -13,7 +13,7 @@ import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import weka.classifiers.Classifier;
 import weka.core.Instances;
-import weka.core.converters.ConverterUtils;
+import weka.core.converters.ConverterUtils.DataSource;
 import software.amazon.awssdk.services.s3.model.*;
 
 import static java.lang.System.exit;
@@ -33,6 +33,8 @@ import software.amazon.awssdk.services.ec2.Ec2Client;
 import software.amazon.awssdk.services.ec2.model.CreateKeyPairRequest;
 import software.amazon.awssdk.services.ec2.model.Ec2Exception;
 import software.amazon.awssdk.services.s3.S3Client;
+import weka.filters.Filter;
+import weka.filters.unsupervised.attribute.StringToWordVector;
 
 import java.io.File;
 import java.nio.file.Paths;
@@ -46,13 +48,15 @@ public class Main {
 
     private static final String txtVectorsPath = "vectors.txt";
 
+    static final String csvPath = "vectors.csv";
+
     private static final String arffVectorsPath = "vectors.arff";
     private static S3Client s3;
 
     public static void main(String[] args) throws Exception {
         //we should recieve as input the DPmin value, input of the biarcs data set and the location of the
         //hypernym.txt file (can be local)
-        if (args.length < 3) {
+        /*  if (args.length < 3) {
             System.out.println("please provide all the args - input, output, jarfile");
             exit(1);
         }
@@ -63,10 +67,14 @@ public class Main {
         System.out.println("init cluster");
         initHadoopJar(JarBucketName);
         //after those two jobs finish, we have S3 bucket containing the data we would like to learn from
-        downloadFromS3();
-        new TxtToArffConverter().convert(txtVectorsPath,arffVectorsPath);
-        ConverterUtils.DataSource source = new ConverterUtils.DataSource(arffVectorsPath);
+        downloadFromS3(); */
+        new TxtToArffConverter().convert(txtVectorsPath,csvPath);
+        DataSource source = new DataSource("vectors.csv");
         Instances data = source.getDataSet();
+        data.setClassIndex(data.numAttributes() -1);
+        StringToWordVector filter = new StringToWordVector();
+        filter.setInputFormat(data);
+        data = Filter.useFilter(data,filter);
         ClassifierTrainer trainer = new ClassifierTrainer();
         Classifier nb = trainer.train(data);
         new ResultsEvaluator().evaluateResults(data, nb);
