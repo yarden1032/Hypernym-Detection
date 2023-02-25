@@ -67,7 +67,16 @@ public class ParseCorpus {
             for (int i = 0; i < syntactic_ngram_String_array.length; i++) {
                 String[] splitter = syntactic_ngram_String_array[i].split("/");
                 //add here num of occurrences
-                synArray.add(i,new SyntacticNgram(splitter[0], splitter[1], splitter[2], Long.parseLong(splitter[3]), total_count));
+               try {
+                   if(splitter.length>=3)
+                   {
+                       synArray.add(i, new SyntacticNgram(splitter[0], splitter[1], splitter[2], Long.parseLong(splitter[3]), total_count));
+                   }
+               }
+               catch (NumberFormatException ignored)
+               {
+
+               }
             }
             //now we have synarray that is simple way to look on what in the line:
 //            todo: make DependencyPath -> how to do it? dependencytree?
@@ -78,8 +87,10 @@ public class ParseCorpus {
             synArray.sort(comparator);
             //here we are going to create a path and on the fly to send it if it's relevant (two nouns)
             List<List<SyntacticNgram>> typeInSentencesTree = new ArrayList<>();
-            for (int i=0; i< (synArray.get(synArray.size() -1).position.intValue()+ 1) ; i++ ) {
-                typeInSentencesTree.add (new ArrayList<>());
+            if(synArray.size()!=0) {
+                for (int i = 0; i < (synArray.get(synArray.size() - 1).position.intValue() + 1); i++) {
+                    typeInSentencesTree.add(new ArrayList<>());
+                }
             }
             for (int i = 0; i < synArray.size(); i++) {
                 typeInSentencesTree.get(synArray.get(i).position.intValue()).add(synArray.get(i));
@@ -90,7 +101,7 @@ public class ParseCorpus {
                     try {
                         DFSSyntatticNgram(typeInSentencesTree, listForDFS, typeInSentencesTree.get(i).get(j).position.intValue(), j, j, typeInSentencesTree.get(i).get(j), context, total_count);
                     } catch (Exception e) {
-                        throw new RuntimeException(e);
+//                        throw new RuntimeException(e);
                     }
                 }
             }
