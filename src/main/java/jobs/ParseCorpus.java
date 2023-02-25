@@ -111,7 +111,7 @@ public class ParseCorpus {
                     arrayString2[0] = path.get(path.size() - 1).head_word;
                     //return path;
                     context.write(new DependencyPath(CreateText(path), new LongWritable(numOfOccurrences)),
-                            new NounPair(path.get(0).head_word, path.get(path.size()-1).head_word));
+                            new NounPair((path.get(0).head_word),(path.get(path.size()-1).head_word)));
                     return;
             }
             if (isFirstRound){

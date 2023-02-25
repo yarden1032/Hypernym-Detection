@@ -172,7 +172,6 @@ public class Main {
         }
     }
     public static void main(String[] args) throws Exception {
-
 //        Process process = Runtime.getRuntime().exec("pip install nltk");
 //        printResults(process);
 //        we should recieve as input the DPmin value, input of the biarcs data set and the location of the
@@ -324,7 +323,7 @@ public class Main {
 //        steps.add(stepConfigpip);
 
         ScriptBootstrapActionConfig bootstrapAction = new ScriptBootstrapActionConfig()
-                .withPath("s3://scriptbucketton/shell.sh")
+                .withPath("s3://"+JarBucketName+"4/shell.sh")
 //                .withArgs("arg1", "arg2")
                 ;
 
@@ -353,10 +352,10 @@ public class Main {
                 .withName("3gram")
                 .withHadoopJarStep(hadoopJarStep)
 //        TERMINATE_JOB_FLOW
-                .withActionOnFailure("CANCEL_AND_WAIT");
+                .withActionOnFailure("TERMINATE_JOB_FLOW");
         steps.add(stepConfig);
         JobFlowInstancesConfig instances = new JobFlowInstancesConfig()
-                .withInstanceCount(2)
+                .withInstanceCount(5)
 
                 .withMasterInstanceType(InstanceType.M4Large.toString())
                 .withSlaveInstanceType(InstanceType.M4Large.toString())
@@ -367,7 +366,7 @@ public class Main {
                 .withName("3gramNewInputLine")
                 .withInstances(instances)
                 .withSteps(steps).withReleaseLabel("emr-5.36.0")
-//                .withBootstrapActions(bootstrapActions)
+                .withBootstrapActions(bootstrapActions)
                 .withLogUri("s3n://" + JarBucketName + "/logs/");
         runFlowRequest.setServiceRole("EMR_DefaultRole");
         runFlowRequest.setJobFlowRole("EMR_EC2_DefaultRole");
@@ -422,28 +421,7 @@ public class Main {
         System.out.println("Cleanup complete");
         System.out.printf("%n"); */
     }
-    public static void runpythonScript(String[] args) throws Exception {
-        StringWriter writer = new StringWriter();
-        ScriptContext context = new SimpleScriptContext();
 
-        context.setWriter(writer);
-
-        ScriptEngineManager manager = new ScriptEngineManager();
-        System.out.println(manager.getEngineFactories().toString());
-        Options.importSite = false;
-
-//        ScriptEngine engine = manager.getEngineFactories().stream().filter(x-> Objects.equals(x.getEngineName(), "jython")).findFirst().get().getScriptEngine();
-        ScriptEngine engine = manager.getEngineByName("python");
-        Bindings bindings = engine.createBindings();
-        bindings.put("args", args);
-        context.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
-        engine.eval(new FileReader(resolvePythonScriptPath("hello.py")), context);
-        System.out.println(writer.toString().trim());
-    }
-    private static String resolvePythonScriptPath(String path){
-        File file = new File(path);
-        return file.getAbsolutePath();
-    }
 }
 
 

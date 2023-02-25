@@ -68,6 +68,8 @@ public class JobsRunnable {
         DPmin = Long.parseLong(args[3]);
         System.out.println("arg number 2: "+DPmin);
         System.out.println(DPmin);
+        //if run locally, comment this line and have hello.py file.
+//        downloadFromS3(bucketPath+"5","hello.py","hello.py");
 
 
         // Split Corpus
@@ -102,6 +104,7 @@ public class JobsRunnable {
         return outputPath;
     }
     private static void downloadFromS3(String bucketName,String key,String outputPath) throws IOException {
+        System.out.println("downloading from:"+bucketName);
         //here we are downloading the map-reduce jobs result and saving it as the data for the classifier
 
         S3Client s3 = S3Client.builder().region(Region.US_EAST_1).build();
