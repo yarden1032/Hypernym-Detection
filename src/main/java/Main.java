@@ -367,7 +367,7 @@ public class Main {
                 .withName("3gramNewInputLine")
                 .withInstances(instances)
                 .withSteps(steps).withReleaseLabel("emr-5.36.0")
-                .withBootstrapActions(bootstrapActions)
+//                .withBootstrapActions(bootstrapActions)
                 .withLogUri("s3n://" + JarBucketName + "/logs/");
         runFlowRequest.setServiceRole("EMR_DefaultRole");
         runFlowRequest.setJobFlowRole("EMR_EC2_DefaultRole");
