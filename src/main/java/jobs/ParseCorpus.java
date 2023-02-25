@@ -20,26 +20,7 @@ public class ParseCorpus {
 
 
     public static class MapperClass extends Mapper<LongWritable, Text, DependencyPath, NounPair> {
-        public static String runpythonScript(String[] args) throws Exception {
-            StringWriter writer = new StringWriter();
-            ScriptContext context = new SimpleScriptContext();
 
-            context.setWriter(writer);
-
-            ScriptEngineManager manager = new ScriptEngineManager();
-            System.out.println(manager.getEngineFactories().toString());
-            ScriptEngine engine = manager.getEngineByName("python");
-            Bindings bindings = engine.createBindings();
-            bindings.put("args", args);
-            context.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
-            engine.eval(new FileReader(resolvePythonScriptPath("hello.py")), context);
-            return writer.toString().trim();
-        }
-
-        private static String resolvePythonScriptPath(String path) {
-            File file = new File(path);
-            return file.getAbsolutePath();
-        }
 
         @Override
         public void map(LongWritable lineId, Text line, Mapper.Context context) {
@@ -67,9 +48,9 @@ public class ParseCorpus {
                 String[] splitter = syntactic_ngram_String_array[i].split("/");
                 //add here num of occurrences
                try {
-                   if(splitter.length>=3)
+                   if(splitter.length>=4)
                    {
-                       synArray.add(i, new SyntacticNgram(splitter[0], splitter[1], splitter[2], Long.parseLong(splitter[3]), total_count));
+                       synArray.add(new SyntacticNgram(splitter[0], splitter[1], splitter[2], Long.parseLong(splitter[3]), total_count));
                    }
                }
                catch (NumberFormatException ignored)
@@ -89,6 +70,8 @@ public class ParseCorpus {
                 }
             }
             for (int i = 0; i < synArray.size(); i++) {
+                if(synArray.get(i).position.intValue()<0)
+                    continue;
                 typeInSentencesTree.get(synArray.get(i).position.intValue()).add(synArray.get(i));
             }
             for (int i = 0; i < typeInSentencesTree.size(); i++) {

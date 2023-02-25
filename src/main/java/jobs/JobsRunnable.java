@@ -3,6 +3,14 @@ package jobs;
 import DataTypes.CounterType;
 import DataTypes.DependencyPath;
 import DataTypes.NounPair;
+import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.model.GetObjectRequest;
+import com.amazonaws.services.s3.model.S3Object;
+import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
@@ -15,8 +23,12 @@ import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
+import org.python.core.Options;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
 
-import java.io.IOException;
+import javax.script.*;
+import java.io.*;
 
 public class JobsRunnable {
 
@@ -25,13 +37,21 @@ public class JobsRunnable {
 
     private static String hypernymPath;
     private static final String LOG_PATH = "/log-files/";
-
+    private static final Region region = Region.US_EAST_1;
     private static long DPmin;
+    private static final AWSCredentials credentials=new DefaultAWSCredentialsProviderChain().getCredentials();
+    private static final String script = "from nltk.stem import *\n" +
+            "import sys\n" +
+            "stemmer = PorterStemmer()\n" +
+            "plural = sys.argv[1]\n" +
+            "single = stemmer.stem(plural)\n" +
+            "print(single)";
 
     private static long featureLexiconSize;
 
-    public static void main(String[] args) throws IOException {
-
+    public static void main(String[] args) throws Exception {
+        downloadFromS3("scriptbucketton","hello.py","hello.py");
+//        System.out.println( runpythonScript(starr));
         if (args.length < 4) {
             System.err.println(
                     "Wrong argument count received.\nExpected <corpus-path> <bucket path> <stop words path>.");
@@ -80,6 +100,30 @@ public class JobsRunnable {
                         : String.format("%s/jobs/%s", bucketPath, job.getJobName());
         FileOutputFormat.setOutputPath(job, new Path(outputPath));
         return outputPath;
+    }
+    private static void downloadFromS3(String bucketName,String key,String outputPath) throws IOException {
+        //here we are downloading the map-reduce jobs result and saving it as the data for the classifier
+
+        S3Client s3 = S3Client.builder().region(Region.US_EAST_1).build();
+
+        GetObjectRequest getObjectRequest = new GetObjectRequest(bucketName, key);
+        try {
+            File f = new File("/");
+            if(f.delete()) {
+                System.out.println("output file replaced with new one");
+            }
+        }
+        catch(Exception e) {
+            //No file, all good
+
+        }
+        AmazonS3 s3Client = AmazonS3ClientBuilder.standard()
+                .withCredentials(new AWSStaticCredentialsProvider(credentials)).withRegion(String.valueOf(region))
+                .build();
+        S3Object s3Object = s3Client.getObject(new GetObjectRequest(bucketName, key));
+        File file = new File(outputPath);
+        file.createNewFile();
+        FileUtils.copyInputStreamToFile(s3Object.getObjectContent(), file);
     }
 
     private static String setOutput(Job job) {
@@ -143,6 +187,24 @@ public class JobsRunnable {
                     "Exception caught! EXCEPTION: %s\nLogs in S3 bucket at %s.%n", e.getMessage(), LOG_PATH);
             System.exit(1);
         }
+    }
+
+
+
+    public static String executeScript(String input) throws IOException, InterruptedException {
+        Process p = Runtime.getRuntime().exec(
+                        "python3 hello.py "+input);
+        p.waitFor();
+
+        BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
+        BufferedReader errorReader = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+
+        StringBuilder lines = new StringBuilder();
+        String line = "";
+        while ((line = reader.readLine()) != null) {
+            lines.append(line);
+        }
+        return lines.toString();
     }
 
 }

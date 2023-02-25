@@ -186,9 +186,13 @@ public class Main {
         txtHypernymPath = args[1];
          inputPath = args[0];
          dpmin = args[2];
+        uploadJar("shell.sh", JarBucketName+"4");
+        uploadJar("hello.py", JarBucketName+"5");
+        uploadJar(jarfileNme, JarBucketName);
         uploadJar(jarfileNme, JarBucketName);
         uploadJar(txtHypernymPath, JarBucketName+"2");
         uploadJar(inputPath, JarBucketName+"3");
+
         System.out.println("init cluster");
         initHadoopJar(JarBucketName);
 
@@ -320,8 +324,9 @@ public class Main {
 //        steps.add(stepConfigpip);
 
         ScriptBootstrapActionConfig bootstrapAction = new ScriptBootstrapActionConfig()
-                .withPath("s3://my-bucket/my-script.sh")
-                .withArgs("arg1", "arg2");
+                .withPath("s3://scriptbucketton/shell.sh")
+//                .withArgs("arg1", "arg2")
+                ;
 
         BootstrapActionConfig bootstrapConfig = new BootstrapActionConfig()
                 .withName("My Bootstrap Action")
@@ -362,7 +367,7 @@ public class Main {
                 .withName("3gramNewInputLine")
                 .withInstances(instances)
                 .withSteps(steps).withReleaseLabel("emr-5.36.0")
-//                .withBootstrapActions(bootstrapActions)
+                .withBootstrapActions(bootstrapActions)
                 .withLogUri("s3n://" + JarBucketName + "/logs/");
         runFlowRequest.setServiceRole("EMR_DefaultRole");
         runFlowRequest.setJobFlowRole("EMR_EC2_DefaultRole");
