@@ -63,7 +63,6 @@ public class ParseCorpus {
             String[] syntactic_ngram_String_array = syntactic_ngram_String.split(" ");
 
             List<SyntacticNgram> synArray = new ArrayList<>();
-            //SyntacticNgram[] synArray = new SyntacticNgram[syntactic_ngram_String_array.length];
             for (int i = 0; i < syntactic_ngram_String_array.length; i++) {
                 String[] splitter = syntactic_ngram_String_array[i].split("/");
                 //add here num of occurrences
@@ -78,9 +77,6 @@ public class ParseCorpus {
 
                }
             }
-            //now we have synarray that is simple way to look on what in the line:
-//            todo: make DependencyPath -> how to do it? dependencytree?
-
 
             // this is a sort by using the default java interface
             SyntacticNgramComparator comparator = new SyntacticNgramComparator();
@@ -96,12 +92,20 @@ public class ParseCorpus {
                 typeInSentencesTree.get(synArray.get(i).position.intValue()).add(synArray.get(i));
             }
             for (int i = 0; i < typeInSentencesTree.size(); i++) {
-                for (int j = 0; j < typeInSentencesTree.get(i).size(); j++) {
-                    ArrayList<SyntacticNgram> listForDFS = new ArrayList<>();
-                    try {
-                        DFSSyntatticNgram(typeInSentencesTree, listForDFS, typeInSentencesTree.get(i).get(j).position.intValue(), j, j, typeInSentencesTree.get(i).get(j), context, total_count);
-                    } catch (Exception e) {
-//                        throw new RuntimeException(e);
+                for (int k = 0 ; k < typeInSentencesTree.get(i).size(); k++) {
+                        for (int j = i + 1; j < typeInSentencesTree.size(); j++) {
+                            if (!typeInSentencesTree.get(j).isEmpty()) {
+                                //for each first word possible in path, we want to create a path from it to what is under
+                                ArrayList<SyntacticNgram> path = new ArrayList<>();
+                                try {
+                                    DFSSyntatticNgram(typeInSentencesTree, path, j, i, typeInSentencesTree.get(i).get(k),true,context,total_count);
+                                    /*context.write(new DependencyPath(CreateText(path), new LongWritable(total_count)),
+                                            new NounPair(path.get(0).head_word, path.get(path.size()-1).head_word)); */
+                                } catch (Exception e) {
+                                    throw new RuntimeException(e);
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -115,44 +119,39 @@ public class ParseCorpus {
             return (new Text(stToText));
         }
 
-        private static void DFSSyntatticNgram(List<List<SyntacticNgram>> typeInSentencesTree, ArrayList<SyntacticNgram> path, int lastLevel, int CurrentindexInLevel, int currentLevel, SyntacticNgram lastSyn, Mapper.Context context, long numOfOccurrences) throws Exception {
-            if (currentLevel >= lastLevel) {
-                path.add(lastSyn);
-                if (path.size() >= 1) {
+        //private static void DFSSyntatticNgram(List<List<SyntacticNgram>> typeInSentencesTree, ArrayList<SyntacticNgram> path, int lastLevel, int CurrentindexInLevel, int currentLevel, SyntacticNgram lastSyn, Mapper.Context context, long numOfOccurrences) throws Exception {
+        private static void DFSSyntatticNgram(List<List<SyntacticNgram>> typeInSentencesTree, ArrayList<SyntacticNgram> path, int lastLevel,int currentLevel, SyntacticNgram firstSyn,boolean isFirstRound, Mapper.Context context,long numOfOccurrences) throws Exception {
+            if (currentLevel > lastLevel && !path.isEmpty()) {
                     String[] arrayString = new String[1];
                     arrayString[0] = path.get(0).head_word;
                     String[] arrayString2 = new String[1];
-                    arrayString2[0] = lastSyn.head_word;
-                    context.write(new DependencyPath(CreateText(path),new LongWritable(numOfOccurrences)),
-                            new NounPair(path.get(0).head_word,lastSyn.head_word));
-                            //new NounPair(runpythonScript(arrayString), runpythonScript(arrayString2), numOfOccurrences));
+                    arrayString2[0] = path.get(path.size() - 1).head_word;
+                    //return path;
+                    context.write(new DependencyPath(CreateText(path), new LongWritable(numOfOccurrences)),
+                            new NounPair(path.get(0).head_word, path.get(path.size()-1).head_word));
                     return;
+            }
+            if (isFirstRound){
+                path.add(firstSyn);
+                DFSSyntatticNgram(typeInSentencesTree, path, lastLevel, currentLevel +1, firstSyn,false,context,numOfOccurrences);
+            }
+            else {
+                if (!typeInSentencesTree.get(currentLevel).isEmpty()){
+                    for (int i=0; i< typeInSentencesTree.get(currentLevel).size(); i++) {
+                        if (!typeInSentencesTree.get(currentLevel).isEmpty()) {
+                            ArrayList <SyntacticNgram> newPath = new ArrayList<>(path);
+                            newPath.add(typeInSentencesTree.get(currentLevel).get(i));
+                            DFSSyntatticNgram(typeInSentencesTree, newPath, lastLevel, currentLevel + 1, firstSyn, false, context, numOfOccurrences);
+                        }
+                        }
+                    }
+                else{
+                    DFSSyntatticNgram(typeInSentencesTree, path, lastLevel, currentLevel +1, firstSyn,false,context,numOfOccurrences);
                 }
             }
-            if (typeInSentencesTree.get(currentLevel).size() == 0)
-            //if need to skip for next one because no level 2 for example
-            {
-                DFSSyntatticNgram(typeInSentencesTree, path, lastLevel, CurrentindexInLevel, currentLevel + 1, lastSyn, context, numOfOccurrences);
 
-            }
-            if (!path.isEmpty() && path.get(path.size() - 1).position >= currentLevel) {
-                //no need to add it, just skip for next level
-                DFSSyntatticNgram(typeInSentencesTree, path, lastLevel, CurrentindexInLevel, currentLevel + 1, lastSyn, context, numOfOccurrences);
-
-            } else {
-                path.add(typeInSentencesTree.get(currentLevel).get(CurrentindexInLevel));
-                DFSSyntatticNgram(typeInSentencesTree, path, lastLevel, 0, currentLevel + 1, lastSyn, context, numOfOccurrences);
-                path.remove(typeInSentencesTree.get(currentLevel).get(CurrentindexInLevel));
-                if (CurrentindexInLevel < typeInSentencesTree.get(currentLevel).size() - 1)
-                    DFSSyntatticNgram(typeInSentencesTree, path, lastLevel, CurrentindexInLevel + 1, currentLevel, lastSyn, context, numOfOccurrences);
-            }
         }
 
-        @Override
-        protected void cleanup(Mapper<LongWritable, Text, DependencyPath, NounPair>.Context context) throws IOException, InterruptedException {
-            System.out.println("done map");
-        }
-    }
 
     public static class PartitionerClass extends Partitioner<DependencyPath, NounPair> {
 
