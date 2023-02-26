@@ -15,6 +15,7 @@ import javax.script.*;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class ParseCorpus {
 
@@ -24,16 +25,15 @@ public class ParseCorpus {
 
         @Override
         public void map(LongWritable lineId, Text line, Mapper.Context context) {
+            System.out.println(line);
             //Todo: split by tab like assignment2
             String[] words = line.toString().split("\\t");
+            if(!Objects.equals(line.toString(), "")||words.length<3)
+            {
+
             String head_word = words[0];
             //  String[] arrayString = new String[1];
-            // arrayString[0] = head_word;
-            try {
-                //    head_word =  runpythonScript(arrayString);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+
             String syntactic_ngram_String = words[1];
             long total_count;
             try {
@@ -85,13 +85,15 @@ public class ParseCorpus {
                                     /*context.write(new DependencyPath(CreateText(path), new LongWritable(total_count)),
                                             new NounPair(path.get(0).head_word, path.get(path.size()-1).head_word)); */
                                 } catch (Exception e) {
-                                    throw new RuntimeException(e);
+                                    System.out.println("null stuff");
+//                                    throw new RuntimeException(e);
                                 }
                             }
                         }
                     }
                 }
             }
+        }
         }
 
         private static Text CreateText(ArrayList<SyntacticNgram> path) {
@@ -110,8 +112,10 @@ public class ParseCorpus {
                     String[] arrayString2 = new String[1];
                     arrayString2[0] = path.get(path.size() - 1).head_word;
                     //return path;
+                NounPair nounPair = new NounPair((path.get(0).head_word),(path.get(path.size()-1).head_word));
+//                System.out.println(nounPair);
                     context.write(new DependencyPath(CreateText(path), new LongWritable(numOfOccurrences)),
-                            new NounPair((path.get(0).head_word),(path.get(path.size()-1).head_word)));
+                            nounPair);
                     return;
             }
             if (isFirstRound){

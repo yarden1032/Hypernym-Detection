@@ -50,8 +50,7 @@ public class JobsRunnable {
     private static long featureLexiconSize;
 
     public static void main(String[] args) throws Exception {
-        downloadFromS3("scriptbucketton","hello.py","hello.py");
-//        System.out.println( runpythonScript(starr));
+//        downloadFromS3("scriptbucketton","hello.py","hello.py");
         if (args.length < 4) {
             System.err.println(
                     "Wrong argument count received.\nExpected <corpus-path> <bucket path> <stop words path>.");
