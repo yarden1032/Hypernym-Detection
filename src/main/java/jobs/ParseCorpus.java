@@ -94,7 +94,12 @@ public class ParseCorpus {
                 }
             }
         }
+
+        @Override
+        protected void cleanup(Mapper<LongWritable, Text, DependencyPath, NounPair>.Context context) throws IOException, InterruptedException {
+            System.out.println("finished map");
         }
+    }
 
         private static Text CreateText(ArrayList<SyntacticNgram> path) {
             String stToText = "";
