@@ -22,7 +22,7 @@ public class CreateVectors {
         public void map(LongWritable lineId, Text line, Mapper.Context context) throws IOException, InterruptedException {
 
             String[] splitLine = line.toString().split("\\t");
-            if (splitLine.length == 3) {
+            if (splitLine.length > 2) {
                 String path = splitLine[0];
                 String numOfOccurrencesPerPath = splitLine[1];
                 String pathId = splitLine[2];
@@ -34,7 +34,6 @@ public class CreateVectors {
                             context.write(new NounPair(nouns[0], nouns[1]), new DependencyPath(new LongWritable(Long.parseLong(pathId)), new Text(path), new LongWritable(Long.parseLong(numOfOccurrencesPerPath))));
                         } catch (NumberFormatException ex) {
                             System.out.println("failed to parse to long: " + ex.getMessage());
-
                         }
                 }
             }
@@ -86,27 +85,27 @@ public class CreateVectors {
 
             boolean isFromHypernymFile = false;
 
-                for (DependencyPath currPath : paths) {
+            for (DependencyPath currPath : paths) {
+                try {
+                int vectorId = (int) currPath.idInVector.get();
+                if (vectorId != 0) {
+                    featureVector.setSize((int) featureLexiconSize);
                     try {
-                        int vectorId = (int) currPath.idInVector.get();
-                        if (vectorId != 0) {
-                            featureVector.setSize((int) featureLexiconSize);
-                            try {
-                                Integer curr = featureVector.get(vectorId);
-                                if (curr != null) {
-                                    featureVector.set(vectorId - 1, curr + (int) currPath.numOfOccurrences.get());
-                                } else {
-                                    featureVector.set(vectorId - 1, (int) currPath.numOfOccurrences.get());
-                                }
-                            } catch (Exception ex) {
-                                featureVector.set(vectorId - 1, (int) currPath.numOfOccurrences.get());
-                            }
+                        Integer curr = featureVector.get(vectorId);
+                        if (curr != null) {
+                            featureVector.set(vectorId - 1, curr + (int) currPath.numOfOccurrences.get());
                         } else {
-                            isFromHypernymFile = true;
+                            featureVector.set(vectorId - 1, (int) currPath.numOfOccurrences.get());
                         }
-                    } catch (ClassCastException ex) {
-                        System.out.println("failed to cast to int: " + ex.getMessage());
+                    } catch (Exception ex) {
+                        featureVector.set(vectorId - 1, (int) currPath.numOfOccurrences.get());
                     }
+                } else {
+                    isFromHypernymFile = true;
+                      }
+                     } catch (ClassCastException ex) {
+                      System.out.println("failed to cast to int: " + ex.getMessage());
+                     }
                 }
                 if (featureVector.size() > 0 && isFromHypernymFile) {
                     for (int i = 0; i < featureVector.size(); i++) {
@@ -119,3 +118,4 @@ public class CreateVectors {
             }
         }
     }
+
