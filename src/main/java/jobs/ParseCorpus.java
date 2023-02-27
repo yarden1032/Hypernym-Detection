@@ -22,11 +22,16 @@ public class ParseCorpus {
 
     public static class MapperClass extends Mapper<LongWritable, Text, DependencyPath, NounPair> {
 
-
+static Mapper.Context context;
         @Override
         public void map(LongWritable lineId, Text line, Mapper.Context context) {
-            System.out.println(line);
+            this.context = context;
+//            System.out.println(line);
             //Todo: split by tab like assignment2
+            if(line.toString().contains("abounded\tabounded/VBD/ccomp/0 in/IN/prep/1 limits/NNS/pobj/2 of/IN/prep/3"))
+            {
+                System.out.println("last line");
+            }
             String[] words = line.toString().split("\\t");
             if(!Objects.equals(line.toString(), "")||words.length<3)
             {
@@ -81,7 +86,7 @@ public class ParseCorpus {
                                 //for each first word possible in path, we want to create a path from it to what is under
                                 ArrayList<SyntacticNgram> path = new ArrayList<>();
                                 try {
-                                    DFSSyntatticNgram(typeInSentencesTree, path, j, i, typeInSentencesTree.get(i).get(k),true,context,total_count);
+                                    DFSSyntatticNgram(typeInSentencesTree, path, j, i, typeInSentencesTree.get(i).get(k),true,total_count);
                                     /*context.write(new DependencyPath(CreateText(path), new LongWritable(total_count)),
                                             new NounPair(path.get(0).head_word, path.get(path.size()-1).head_word)); */
                                 } catch (Exception e) {
@@ -93,13 +98,8 @@ public class ParseCorpus {
                     }
                 }
             }
-        }
 
-        @Override
-        protected void cleanup(Mapper<LongWritable, Text, DependencyPath, NounPair>.Context context) throws IOException, InterruptedException {
-            System.out.println("finished map");
         }
-    }
 
         private static Text CreateText(ArrayList<SyntacticNgram> path) {
             String stToText = "";
@@ -110,22 +110,27 @@ public class ParseCorpus {
         }
 
         //private static void DFSSyntatticNgram(List<List<SyntacticNgram>> typeInSentencesTree, ArrayList<SyntacticNgram> path, int lastLevel, int CurrentindexInLevel, int currentLevel, SyntacticNgram lastSyn, Mapper.Context context, long numOfOccurrences) throws Exception {
-        private static void DFSSyntatticNgram(List<List<SyntacticNgram>> typeInSentencesTree, ArrayList<SyntacticNgram> path, int lastLevel,int currentLevel, SyntacticNgram firstSyn,boolean isFirstRound, Mapper.Context context,long numOfOccurrences) throws Exception {
+        private static void DFSSyntatticNgram(List<List<SyntacticNgram>> typeInSentencesTree, ArrayList<SyntacticNgram> path, int lastLevel,int currentLevel, SyntacticNgram firstSyn,boolean isFirstRound,long numOfOccurrences)  {
             if (currentLevel > lastLevel && !path.isEmpty()) {
-                    String[] arrayString = new String[1];
-                    arrayString[0] = path.get(0).head_word;
-                    String[] arrayString2 = new String[1];
-                    arrayString2[0] = path.get(path.size() - 1).head_word;
-                    //return path;
+                String[] arrayString = new String[1];
+                arrayString[0] = path.get(0).head_word;
+                String[] arrayString2 = new String[1];
+                arrayString2[0] = path.get(path.size() - 1).head_word;
+                //return path;
                 NounPair nounPair = new NounPair((path.get(0).head_word),(path.get(path.size()-1).head_word));
-//                System.out.println(nounPair);
+                try {
                     context.write(new DependencyPath(CreateText(path), new LongWritable(numOfOccurrences)),
                             nounPair);
-                    return;
+                } catch (IOException e) {
+                    System.out.println("IO exception");
+                } catch (InterruptedException e) {
+                    System.out.println("InterruptedException");
+                }
+                return;
             }
             if (isFirstRound){
                 path.add(firstSyn);
-                DFSSyntatticNgram(typeInSentencesTree, path, lastLevel, currentLevel +1, firstSyn,false,context,numOfOccurrences);
+                DFSSyntatticNgram(typeInSentencesTree, path, lastLevel, currentLevel +1, firstSyn,false,numOfOccurrences);
             }
             else {
                 if (!typeInSentencesTree.get(currentLevel).isEmpty()){
@@ -133,16 +138,28 @@ public class ParseCorpus {
                         if (!typeInSentencesTree.get(currentLevel).isEmpty()) {
                             ArrayList <SyntacticNgram> newPath = new ArrayList<>(path);
                             newPath.add(typeInSentencesTree.get(currentLevel).get(i));
-                            DFSSyntatticNgram(typeInSentencesTree, newPath, lastLevel, currentLevel + 1, firstSyn, false, context, numOfOccurrences);
-                        }
+                            DFSSyntatticNgram(typeInSentencesTree, newPath, lastLevel, currentLevel + 1, firstSyn, false, numOfOccurrences);
                         }
                     }
+                }
                 else{
-                    DFSSyntatticNgram(typeInSentencesTree, path, lastLevel, currentLevel +1, firstSyn,false,context,numOfOccurrences);
+                    try{DFSSyntatticNgram(typeInSentencesTree, path, lastLevel, currentLevel +1, firstSyn,false,numOfOccurrences);
+                    }
+                    catch(StackOverflowError e){
+                        System.out.println("stackoverflow Was here: "+typeInSentencesTree);
+                    }
                 }
             }
 
         }
+
+        @Override
+        protected void cleanup(Mapper<LongWritable, Text, DependencyPath, NounPair>.Context context) throws IOException, InterruptedException {
+            System.out.println("finished map");
+            System.out.println(context);
+        }
+    }
+
 
 
     public static class PartitionerClass extends Partitioner<DependencyPath, NounPair> {
@@ -160,6 +177,7 @@ public class ParseCorpus {
 
             @Override
             public void setup(Context context) {
+                System.out.println("setupReducer");
                 DPmin = context.getConfiguration().getLong("DPmin", 5);
                 featureLexiconSizeCounter = context.getCounter(CounterType.FEATURE_LEXICON);
             }
@@ -168,6 +186,7 @@ public class ParseCorpus {
         @Override
         public void reduce(DependencyPath path, Iterable<NounPair> occurrencesList, Context context)
                 throws IOException, InterruptedException {
+            System.out.println("reduce:"+path);
             StringBuilder valueString = new StringBuilder();
             long counter = 0;
             for (NounPair value : occurrencesList) {
