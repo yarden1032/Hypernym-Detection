@@ -16,20 +16,26 @@ The goal of the project is to automatically learn hypernym (is-a) relations from
 
 ## References
 Learning syntactic pattern for automatic hypernym discovery - https://ai.stanford.edu/~rion/papers/hypernym_nips05.pdf
+
 Google syntactic N-grams corpus -  http://storage.googleapis.com/books/syntactic-ngrams/index.html
 
 ## Statistics
 
 #### Communication
 
+<key,value> pairs between mapper and reducer in Parse Corpus - 54752836
+
+<key,value> pairs between mapper and reducer in Create Vectors - 53540383
+
+
 #### Results
-after running a classifier based on .... algorithm the measures received were:
+after running a classifier based on Naive Bayes algorithm the measures received were:
 
-Precision - 
+Precision - 0.667550839964633
 
-Recall - 
+Recall - 0.9556962025316456
 
-F1 - score - 
+F1 - score - 0.7860489328474752
 
 #### Analysis
 
@@ -65,5 +71,4 @@ for each dependency path per noun pair, the reducer increases the value by the n
 after the map reduce jobs are done, the system downloads the result from S3 bucket and parses it to csv format.
 with this data, we create the WEKA classifier and test it using the 10-fold cross validation. 
 the output of the system is the precision, recall and f1 measures of the testing.  
-
 

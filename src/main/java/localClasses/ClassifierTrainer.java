@@ -3,6 +3,7 @@ package localClasses;
 import weka.classifiers.Classifier;
 import weka.classifiers.bayes.NaiveBayes;
 import weka.classifiers.bayes.NaiveBayesUpdateable;
+import weka.classifiers.functions.Logistic;
 import weka.classifiers.lazy.IBk;
 import weka.classifiers.trees.J48;
 import weka.classifiers.trees.M5P;
@@ -31,22 +32,6 @@ public class ClassifierTrainer {
         NaiveBayes classifier = new NaiveBayes();
         classifier.buildClassifier(data);
         return classifier;
-
-        //j48
-        /*J48 j48 = new J48();
-        j48.buildClassifier(data);
-        return j48; */
-
-        //lbk
-        /*IBk ibk = new IBk();
-        ibk.buildClassifier(data);
-        return ibk; */
-
-       //random tree
-        /*RandomTree randomTree = new RandomTree();
-        randomTree.buildClassifier(data);
-        return randomTree; */
-
     }
 
 }

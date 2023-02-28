@@ -16,8 +16,6 @@ public class NounPair
 
     public Text word2;
 
-    //public LongWritable numOfOccurrences;
-
     public BooleanWritable isHypernym;
 
     public NounPair(String word1, String word2){
@@ -25,8 +23,6 @@ public class NounPair
         this.word1 = new Text(word1);
 
         this.word2 = new Text(word2);
-
-      //  this.numOfOccurrences = new LongWritable(numOfOccurrences);
 
         isHypernym = new BooleanWritable(false);
 
@@ -38,8 +34,6 @@ public class NounPair
 
         this.word2 = new Text(word2);
 
-        //this.numOfOccurrences = new LongWritable(numOfOccurrences);
-
         this.isHypernym = new BooleanWritable(isHypernym);
 
     }
@@ -49,8 +43,6 @@ public class NounPair
         word1 = new Text();
 
         word2 = new Text();
-
-        // numOfOccurrences = new LongWritable();
 
         isHypernym = new BooleanWritable();
     }
@@ -63,8 +55,6 @@ public class NounPair
 
         word2.write(dataOutput);
 
-        //numOfOccurrences.write(dataOutput);
-
         isHypernym.write(dataOutput);
 
     }
@@ -75,8 +65,6 @@ public class NounPair
         word1.readFields(dataInput);
 
         word2.readFields(dataInput);
-
-        //numOfOccurrences.readFields(dataInput);
 
         isHypernym.readFields(dataInput);
 

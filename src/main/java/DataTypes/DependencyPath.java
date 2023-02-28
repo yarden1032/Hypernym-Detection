@@ -9,8 +9,6 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-
-//Roni: should be changed here so the path can have dynamic length;
 public class DependencyPath implements WritableComparable<DependencyPath> {
 
     public LongWritable idInVector;

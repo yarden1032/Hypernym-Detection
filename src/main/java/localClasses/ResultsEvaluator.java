@@ -8,6 +8,7 @@ import java.util.Random;
 
 public class ResultsEvaluator {
     public static void evaluateResults(Instances data, Classifier classifier) throws Exception {
+        System.out.println("Evaluating results");
         Evaluation eval = new Evaluation(data);
         eval.crossValidateModel(classifier, data, 2, new Random(1));
         /**Precision - how many true positive from all positive (TP)/(TP + FP)

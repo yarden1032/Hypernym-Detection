@@ -11,7 +11,6 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Partitioner;
 import org.apache.hadoop.mapreduce.Reducer;
 
-import javax.script.*;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,32 +25,21 @@ static Mapper.Context context;
         @Override
         public void map(LongWritable lineId, Text line, Mapper.Context context) {
             this.context = context;
-//            System.out.println(line);
-            //Todo: split by tab like assignment2
-            if(line.toString().contains("abounded\tabounded/VBD/ccomp/0 in/IN/prep/1 limits/NNS/pobj/2 of/IN/prep/3"))
-            {
-                System.out.println("last line");
-            }
             String[] words = line.toString().split("\\t");
-            if(!Objects.equals(line.toString(), "")||words.length<3)
-            {
+            if(!Objects.equals(line.toString(), "") || words.length < 3) {
 
-            String head_word = words[0];
-            //  String[] arrayString = new String[1];
-
-            String syntactic_ngram_String = words[1];
-            long total_count;
-            try {
-                total_count = Long.parseLong(words[2]);
-            } catch (NumberFormatException e) {
-                return;
-            }
+                String syntactic_ngram_String = words[1];
+                long total_count;
+                try {
+                    total_count = Long.parseLong(words[2]);
+                } catch (NumberFormatException e) {
+                    return;
+                }
             String[] syntactic_ngram_String_array = syntactic_ngram_String.split(" ");
 
             List<SyntacticNgram> synArray = new ArrayList<>();
             for (int i = 0; i < syntactic_ngram_String_array.length; i++) {
                 String[] splitter = syntactic_ngram_String_array[i].split("/");
-                //add here num of occurrences
                try {
                    if(splitter.length>=4)
                    {
@@ -60,11 +48,10 @@ static Mapper.Context context;
                }
                catch (NumberFormatException ignored)
                {
-
+                   System.out.println("failed to convert to long");
                }
             }
 
-            // this is a sort by using the default java interface
             SyntacticNgramComparator comparator = new SyntacticNgramComparator();
             synArray.sort(comparator);
             //here we are going to create a path and on the fly to send it if it's relevant (two nouns)
@@ -87,11 +74,8 @@ static Mapper.Context context;
                                 ArrayList<SyntacticNgram> path = new ArrayList<>();
                                 try {
                                     DFSSyntatticNgram(typeInSentencesTree, path, j, i, typeInSentencesTree.get(i).get(k),true,total_count);
-                                    /*context.write(new DependencyPath(CreateText(path), new LongWritable(total_count)),
-                                            new NounPair(path.get(0).head_word, path.get(path.size()-1).head_word)); */
                                 } catch (Exception e) {
                                     System.out.println("null stuff");
-//                                    throw new RuntimeException(e);
                                 }
                             }
                         }
@@ -109,7 +93,6 @@ static Mapper.Context context;
             return (new Text(stToText));
         }
 
-        //private static void DFSSyntatticNgram(List<List<SyntacticNgram>> typeInSentencesTree, ArrayList<SyntacticNgram> path, int lastLevel, int CurrentindexInLevel, int currentLevel, SyntacticNgram lastSyn, Mapper.Context context, long numOfOccurrences) throws Exception {
         private static void DFSSyntatticNgram(List<List<SyntacticNgram>> typeInSentencesTree, ArrayList<SyntacticNgram> path, int lastLevel,int currentLevel, SyntacticNgram firstSyn,boolean isFirstRound,long numOfOccurrences)  {
             if (currentLevel > lastLevel && !path.isEmpty()) {
                 String[] arrayString = new String[1];
@@ -167,15 +150,6 @@ static Mapper.Context context;
         }
     }
 
-
-
-    public static class PartitionerClass extends Partitioner<DependencyPath, NounPair> {
-
-        @Override
-        public int getPartition(DependencyPath key, NounPair value, int numPartitions) {
-            return (key.hashCode() & 0xFFFFFFF) % numPartitions; // Make sure that equal occurrences will end up in same reducer
-        }
-    }
 
     public static class ReducerClass extends Reducer<DependencyPath, NounPair, DependencyPath, Text> {
         private long DPmin;
