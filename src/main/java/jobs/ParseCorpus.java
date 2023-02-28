@@ -117,7 +117,14 @@ static Mapper.Context context;
                 String[] arrayString2 = new String[1];
                 arrayString2[0] = path.get(path.size() - 1).head_word;
                 //return path;
-                NounPair nounPair = new NounPair((path.get(0).head_word),(path.get(path.size()-1).head_word));
+                NounPair nounPair = null;
+                try {
+                    nounPair = new NounPair(JobsRunnable.executeScript(path.get(0).head_word),JobsRunnable.executeScript(path.get(path.size()-1).head_word));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
                 try {
                     context.write(new DependencyPath(CreateText(path), new LongWritable(numOfOccurrences)),
                             nounPair);

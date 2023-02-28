@@ -52,6 +52,8 @@ import software.amazon.awssdk.services.ec2.model.CreateKeyPairRequest;
 import software.amazon.awssdk.services.ec2.model.Ec2Exception;
 import software.amazon.awssdk.services.s3.S3Client;
 import org.python.core.Options;
+import weka.filters.Filter;
+import weka.filters.unsupervised.attribute.StringToWordVector;
 
 import javax.script.*;
 import java.io.*;
@@ -75,6 +77,8 @@ import com.amazonaws.services.elasticmapreduce.model.RunJobFlowRequest;
 import com.amazonaws.services.elasticmapreduce.model.RunJobFlowResult;
 import com.amazonaws.services.elasticmapreduce.model.ScriptBootstrapActionConfig;
 import com.amazonaws.services.elasticmapreduce.model.StepConfig;
+import weka.filters.Filter;
+import weka.filters.unsupervised.attribute.StringToWordVector;
 
 
 //
@@ -151,6 +155,7 @@ public class Main {
     private static String JarBucketName = "jarbucket";
 
     private static String inputPath = "inputPath";
+    static final String csvPath = "vectors.csv";
 
     private static String jarfileNme = "jarfileNme";
 
@@ -188,7 +193,6 @@ public class Main {
         uploadJar("shell.sh", JarBucketName+"4");
         uploadJar("hello.py", JarBucketName+"5");
         uploadJar(jarfileNme, JarBucketName);
-        uploadJar(jarfileNme, JarBucketName);
         uploadJar(txtHypernymPath, JarBucketName+"2");
         uploadJar(inputPath, JarBucketName+"3");
 
@@ -197,9 +201,14 @@ public class Main {
 
         //after those two jobs finish, we have S3 bucket containing the data we would like to learn from
         downloadFromS3(JarBucketName,"jobs/" + "Create Vectors/" + "part-r-00000","output");
-        new TxtToArffConverter().convert("output",arffVectorsPath);
-        ConverterUtils.DataSource source = new ConverterUtils.DataSource(arffVectorsPath);
+
+        new TxtToArffConverter().convert("output",csvPath);
+        ConverterUtils.DataSource source = new ConverterUtils.DataSource("vectors.csv");
         Instances data = source.getDataSet();
+        data.setClassIndex(data.numAttributes() -1);
+        StringToWordVector filter = new StringToWordVector();
+        filter.setInputFormat(data);
+        data = Filter.useFilter(data,filter);
         ClassifierTrainer trainer = new ClassifierTrainer();
         Classifier nb = trainer.train(data);
         new ResultsEvaluator().evaluateResults(data, nb);
@@ -235,7 +244,8 @@ public class Main {
 
 
         AmazonS3 s3Client = AmazonS3ClientBuilder.standard()
-                .withCredentials(new AWSStaticCredentialsProvider(credentials)).withRegion(String.valueOf(region))
+                .withCredentials(new AWSStaticCredentialsProvider(credentials))
+                .withRegion(String.valueOf(region))
                 .build();
 
         ListObjectsRequest listObjectsRequest = new ListObjectsRequest()
