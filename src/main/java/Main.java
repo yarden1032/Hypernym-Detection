@@ -1,47 +1,39 @@
-import com.amazonaws.services.s3.model.GetObjectRequest;
-import java.io.File;
-import java.io.IOException;
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-import com.amazonaws.services.s3.model.S3Object;
-import localClasses.ResultsEvaluator;
-import localClasses.ClassifierTrainer;
-import localClasses.TxtToCsvConverter;
-import org.apache.commons.io.FileUtils;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.*;
-import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
-import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import weka.classifiers.Classifier;
-import weka.core.Instances;
-import weka.core.converters.ConverterUtils;
-import static java.lang.System.exit;
 import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.services.ec2.model.InstanceType;
 import com.amazonaws.services.elasticmapreduce.AmazonElasticMapReduce;
 import com.amazonaws.services.elasticmapreduce.AmazonElasticMapReduceClient;
 import com.amazonaws.services.elasticmapreduce.model.*;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.model.*;
+import localClasses.ClassifierTrainer;
+import localClasses.ResultsEvaluator;
+import localClasses.TxtToCsvConverter;
+import org.apache.commons.io.FileUtils;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ec2.Ec2Client;
 import software.amazon.awssdk.services.ec2.model.CreateKeyPairRequest;
 import software.amazon.awssdk.services.ec2.model.Ec2Exception;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
+import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
+import weka.classifiers.Classifier;
+import weka.core.Instances;
+import weka.core.converters.ConverterUtils;
 import weka.filters.Filter;
 import weka.filters.unsupervised.attribute.StringToWordVector;
 
-import java.util.List;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
-import com.amazonaws.services.elasticmapreduce.model.BootstrapActionConfig;
-import com.amazonaws.services.elasticmapreduce.model.HadoopJarStepConfig;
-import com.amazonaws.services.elasticmapreduce.model.JobFlowInstancesConfig;
-import com.amazonaws.services.elasticmapreduce.model.RunJobFlowRequest;
-import com.amazonaws.services.elasticmapreduce.model.RunJobFlowResult;
-import com.amazonaws.services.elasticmapreduce.model.ScriptBootstrapActionConfig;
-import com.amazonaws.services.elasticmapreduce.model.StepConfig;
+import java.util.List;
 
+import static java.lang.System.exit;
 
 
 public class Main {
@@ -69,61 +61,70 @@ public class Main {
         jarfileNme =args[3];
         String jarBucketName = args[4];
         txtHypernymPath = args[1];
-         inputPath = args[0];
-         dpmin = args[2];
-     //   uploadJar("shell.sh", jarBucketName +"4");
-     //   uploadJar("hello.py", jarBucketName +"5");
-    //    uploadJar(jarfileNme, jarBucketName);
-     //   uploadJar(txtHypernymPath, jarBucketName +"2");
-     //   uploadJar(inputPath, jarBucketName +"3");
+        inputPath = args[0];
+        dpmin = args[2];
+        uploadJar("shell.sh", jarBucketName +"4");
+        uploadJar("hello.py", jarBucketName +"5");
+        uploadJar(jarfileNme, jarBucketName);
+        uploadJar(txtHypernymPath, jarBucketName +"2");
+        uploadJar(inputPath, jarBucketName +"3");
 
         System.out.println("init cluster");
-        initHadoopJar(jarBucketName);
+        if(initHadoopJar(jarBucketName)) {
 
-        //after those two jobs finish, we have S3 bucket containing the data we would like to learn from
-        downloadFromS3(jarBucketName,"jobs/" + "Create Vectors/" + "part-r-00000","output");
+            //after those two jobs finish, we have S3 bucket containing the data we would like to learn from
 
-        //ArrayList<String> orderedNounPairs = new TxtToCsvConverter().convert("output",csvPath);
-        ArrayList<String> orderedNounPairs = new TxtToCsvConverter().convert("output",csvPath);
-        ConverterUtils.DataSource source = new ConverterUtils.DataSource("vectors.csv");
-        Instances data = source.getDataSet();
-        data.setClassIndex(data.numAttributes() -1);
-        StringToWordVector filter = new StringToWordVector();
-        filter.setInputFormat(data);
-        data = Filter.useFilter(data,filter);
-        ClassifierTrainer trainer = new ClassifierTrainer();
-        Classifier nb = trainer.train(data);
-        new ResultsEvaluator(orderedNounPairs).evaluateResults(data, nb);
+            deleteBucketAndContents(jarBucketName + "2");
+            deleteBucketAndContents(jarBucketName + "3");
+            deleteBucketAndContents(jarBucketName + "4");
+            deleteBucketAndContents(jarBucketName + "5");
+            downloadFromS3(jarBucketName,"jobs/" + "Create Vectors/" + "part-r-00000","output");
+//            Instances data = downloadAndConvert(jarBucketName);
+            ArrayList<String> orderedNounPairs = new TxtToCsvConverter().convert("output",csvPath);
+            ConverterUtils.DataSource source = new ConverterUtils.DataSource(csvPath);
+            Instances  data = source.getDataSet();
+            data.setClassIndex(data.numAttributes() - 1);
+            StringToWordVector filter = new StringToWordVector();
+            filter.setInputFormat(data);
+            data = Filter.useFilter(data, filter);
+            ClassifierTrainer trainer = new ClassifierTrainer();
+            Classifier nb = trainer.train(data);
+            new ResultsEvaluator(orderedNounPairs).evaluateResults(data, nb);
+        }
+        else
+        {
+            System.out.println("Error during cluster job, please get to the buckets to investigate");
+        }
     }
 
     private static void downloadFromS3(String bucketName,String key,String outputPath) throws IOException {
         //here we are downloading the map-reduce jobs result and saving it as the data for the classifier
 
-            s3 = S3Client.builder().region(Region.US_EAST_1).build();
+        s3 = S3Client.builder().region(Region.US_EAST_1).build();
 
-            GetObjectRequest getObjectRequest = new GetObjectRequest(bucketName, key);
-            try {
-                File f = new File(txtVectorsPath);
-                if(f.delete()) {
-                    System.out.println("output file replaced with new one");
-                    }
-                }
-            catch(Exception e) {
-                //No file, all good
-
+        GetObjectRequest getObjectRequest = new GetObjectRequest(bucketName, key);
+        try {
+            File f = new File(txtVectorsPath);
+            if(f.delete()) {
+                System.out.println("output file replaced with new one");
             }
+        }
+        catch(Exception e) {
+            //No file, all good
+
+        }
         AmazonS3 s3Client = AmazonS3ClientBuilder.standard()
                 .withCredentials(new AWSStaticCredentialsProvider(credentials)).withRegion(String.valueOf(region))
                 .build();
-            S3Object s3Object = s3Client.getObject(new GetObjectRequest(bucketName, key));
+        S3Object s3Object = s3Client.getObject(new GetObjectRequest(bucketName, key));
         File file = new File(outputPath);
         file.createNewFile();
         FileUtils.copyInputStreamToFile(s3Object.getObjectContent(), file);
-        }
+    }
 
     private static void uploadJar(String jarFilePath, String bucketName) {
 
-         s3 = S3Client.builder().region(region).build();
+        s3 = S3Client.builder().region(region).build();
         HeadBucketRequest headBucketRequest = HeadBucketRequest.builder()
                 .bucket(bucketName)
                 .build();
@@ -174,7 +175,7 @@ public class Main {
         }
     }
 
-    public static void initHadoopJar(String JarBucketName) throws InterruptedException {
+    public static boolean initHadoopJar(String JarBucketName) throws InterruptedException {
 
         HadoopJarStepConfig hadoopJarSteppip = new HadoopJarStepConfig()
                 .withJar("command-runner.jar")
@@ -235,10 +236,10 @@ public class Main {
 
         String jobFlowId = runJobFlowResult.getJobFlowId();
         System.out.println("Ran job flow with id: " + jobFlowId);
-        waiterJob(jobFlowId,mapReduce);
+        return waiterJob(jobFlowId,mapReduce);
     }
 
-    public static void waiterJob(String jobFlowId,AmazonElasticMapReduce mapReduce) throws InterruptedException {
+    public static boolean waiterJob(String jobFlowId,AmazonElasticMapReduce mapReduce) throws InterruptedException {
         boolean finished = false;
         while (!finished) {
             DescribeClusterRequest describeClusterRequest = new DescribeClusterRequest().withClusterId(jobFlowId);
@@ -248,15 +249,44 @@ public class Main {
             ClusterStatus status = cluster.getStatus();
             if (status.getState().equals(ClusterState.TERMINATED.toString())) {
                 System.out.println("Job flow terminated with state: " + status.getState());
-                finished = true;
+                return true;
             } else {
-                System.out.println("Job flow is still running with state: " + status.getState());
+                if(status.getState().equals(ClusterState.TERMINATED_WITH_ERRORS.toString()))
+                {
+                    return false;
+                }
+                else {
+                    System.out.println("Job flow is still running with state: " + status.getState());
+                }
             }
 
             // Wait for a few seconds before checking the status again
             Thread.sleep(5000);
         }
+        return true;
+
+    }
+    public static void deleteBucketAndContents( String bucketName) {
+        AmazonS3 s3Client = AmazonS3ClientBuilder.standard()
+                .withRegion(region.toString())
+                .withCredentials(new AWSStaticCredentialsProvider(credentials))
+                .build();
+
+        // Delete all objects in the bucket
+        ListObjectsV2Request listObjectsRequest = new ListObjectsV2Request()
+                .withBucketName(bucketName);
+        ListObjectsV2Result listObjectsResult = s3Client.listObjectsV2(listObjectsRequest);
+        List<S3ObjectSummary> objectSummaries = listObjectsResult.getObjectSummaries();
+        while (!objectSummaries.isEmpty()) {
+            DeleteObjectsRequest deleteObjectsRequest = new DeleteObjectsRequest(bucketName)
+                    .withKeys(objectSummaries.stream().map(S3ObjectSummary::getKey).toArray(String[]::new));
+            s3Client.deleteObjects(deleteObjectsRequest);
+            objectSummaries.clear();
+            listObjectsResult = s3Client.listObjectsV2(listObjectsRequest);
+            objectSummaries.addAll(listObjectsResult.getObjectSummaries());
+        }
+
+        // Delete the bucket
+        s3Client.deleteBucket(new DeleteBucketRequest(bucketName));
     }
 }
-
-

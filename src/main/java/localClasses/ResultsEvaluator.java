@@ -22,7 +22,7 @@ public class ResultsEvaluator {
     public void evaluateResults(Instances data, Classifier classifier) throws Exception {
         System.out.println("Evaluating results");
         Evaluation eval = new Evaluation(data);
-        eval.crossValidateModel(classifier, data, 2, new Random(1));
+        eval.crossValidateModel(classifier, data, 10, new Random(1));
         /**Precision - how many true positive from all positive (TP)/(TP + FP)
          Recall - how many true positive from  (TP) / (TP + FN)
          F1 Score = (2 x Precision x Recall) / (Precision + Recall) **/
@@ -39,7 +39,7 @@ public class ResultsEvaluator {
         List<String> falsePositives = new ArrayList<>();
         List<String> trueNegatives = new ArrayList<>();
         List<String> falseNegatives = new ArrayList<>();
-        if (predictionList.size() == nounPairs.size()) {
+//        if (predictionList.size() == nounPairs.size()) {
             boolean complete = false;
             for (int i = 0; !complete && i < predictionList.size(); i++) {
                 // 1 is true 0 is false
@@ -57,18 +57,19 @@ public class ResultsEvaluator {
                             if (falseNegatives.size() < 5 && currPrediction.predicted() == 0 && currPrediction.actual() == 1) {
                                 falseNegatives.add(currNounPair);
                             }
-                        }
+//                        }
                     }
                 }
 
                  if (truePositives.size() == 5 && falsePositives.size() == 5 && trueNegatives.size() == 5 && falseNegatives.size() == 5){
                      complete = true;
-                     System.out.println("True Positives: " + truePositives + "\n");
-                     System.out.println("False Positives: " + falsePositives + "\n");
-                     System.out.println("True Negatives: " + trueNegatives + "\n");
-                     System.out.println("False Negatives: " + falseNegatives + "\n");
                  }
             }
         }
+        System.out.println("True Positives: " + truePositives + "\n");
+        System.out.println("False Positives: " + falsePositives + "\n");
+        System.out.println("True Negatives: " + trueNegatives + "\n");
+        System.out.println("False Negatives: " + falseNegatives + "\n");
     }
+
 }
