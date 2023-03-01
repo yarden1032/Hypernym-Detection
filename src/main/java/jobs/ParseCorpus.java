@@ -167,7 +167,7 @@ static Mapper.Context context;
         @Override
         public void reduce(DependencyPath path, Iterable<NounPair> occurrencesList, Context context)
                 throws IOException, InterruptedException {
-            System.out.println("reduce:"+path);
+          //  System.out.println("reduce:"+path);
             StringBuilder valueString = new StringBuilder();
             long counter = 0;
             for (NounPair value : occurrencesList) {

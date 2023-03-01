@@ -62,7 +62,7 @@ public class JobsRunnable {
 
 
         //Create Vectors
-         Configuration createVectorsConfig = new Configuration();
+              Configuration createVectorsConfig = new Configuration();
         createVectorsConfig.setLong("featureLexiconSize",featureLexiconSize);
         final Job createVectors = Job.getInstance(createVectorsConfig, "Create Vectors");
         String createVectorsPath = createCreateVectorsJob(createVectors, parseCorpusPath,hypernymPath);

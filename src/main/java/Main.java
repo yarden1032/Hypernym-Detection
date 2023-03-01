@@ -71,11 +71,11 @@ public class Main {
         txtHypernymPath = args[1];
          inputPath = args[0];
          dpmin = args[2];
-        uploadJar("shell.sh", jarBucketName +"4");
-        uploadJar("hello.py", jarBucketName +"5");
-        uploadJar(jarfileNme, jarBucketName);
-        uploadJar(txtHypernymPath, jarBucketName +"2");
-        uploadJar(inputPath, jarBucketName +"3");
+     //   uploadJar("shell.sh", jarBucketName +"4");
+     //   uploadJar("hello.py", jarBucketName +"5");
+    //    uploadJar(jarfileNme, jarBucketName);
+     //   uploadJar(txtHypernymPath, jarBucketName +"2");
+     //   uploadJar(inputPath, jarBucketName +"3");
 
         System.out.println("init cluster");
         initHadoopJar(jarBucketName);
@@ -83,7 +83,8 @@ public class Main {
         //after those two jobs finish, we have S3 bucket containing the data we would like to learn from
         downloadFromS3(jarBucketName,"jobs/" + "Create Vectors/" + "part-r-00000","output");
 
-        new TxtToCsvConverter().convert("output",csvPath);
+        //ArrayList<String> orderedNounPairs = new TxtToCsvConverter().convert("output",csvPath);
+        ArrayList<String> orderedNounPairs = new TxtToCsvConverter().convert("output",csvPath);
         ConverterUtils.DataSource source = new ConverterUtils.DataSource("vectors.csv");
         Instances data = source.getDataSet();
         data.setClassIndex(data.numAttributes() -1);
@@ -92,7 +93,7 @@ public class Main {
         data = Filter.useFilter(data,filter);
         ClassifierTrainer trainer = new ClassifierTrainer();
         Classifier nb = trainer.train(data);
-        new ResultsEvaluator().evaluateResults(data, nb);
+        new ResultsEvaluator(orderedNounPairs).evaluateResults(data, nb);
     }
 
     private static void downloadFromS3(String bucketName,String key,String outputPath) throws IOException {

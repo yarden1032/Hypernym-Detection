@@ -104,8 +104,8 @@ public class DependencyPath implements WritableComparable<DependencyPath> {
     }
 
     private int insideComparison(DependencyPath other) {
-        System.out.println("insideComparison:" +
-                typeInSentence);
+       // System.out.println("insideComparison:" +
+         //       typeInSentence);
         return typeInSentence.compareTo(other.typeInSentence);
     }
     public boolean isFake(){

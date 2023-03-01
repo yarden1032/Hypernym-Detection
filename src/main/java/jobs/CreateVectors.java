@@ -113,7 +113,7 @@ public class CreateVectors {
                             featureVector.set(i, 0);
                         }
                     }
-                    context.write(new Text(featureVector.toString()), nounPair.isHypernym);
+                    context.write(new Text(nounPair.word1 + "," + nounPair.word2 + "\t" + featureVector), nounPair.isHypernym);
                 }
             }
         }
