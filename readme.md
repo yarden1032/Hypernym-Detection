@@ -23,9 +23,9 @@ Google syntactic N-grams corpus -  http://storage.googleapis.com/books/syntactic
 
 #### Communication
 
-<key,value> pairs between mapper and reducer in Parse Corpus - 54752836
+<key,value> pairs between mapper and reducer in Parse Corpus - 54752836 in bytes - 2654515668
 
-<key,value> pairs between mapper and reducer in Create Vectors - 53540383
+<key,value> pairs between mapper and reducer in Create Vectors - 53540383 in bytes - 2586284958
 
 
 #### Results
@@ -47,26 +47,22 @@ True Positives:
 - work,creation
 - wool,hair
 
-True Negatives: 
-- touch,style
-- photography,representation
+True Negatives:
 - phase,r
-- metabolism,energy
-- member,organization
-
-False Positives:
-- town,region
-- touch,sense
-- top,crown
-- tone,speech
-- tone,quality
-
-False Negatives: 
+- metabolism,energy 
 - world,character
-- work,employment
-- wit,humour
 - winter,right
-- volunteer,men
+- wildness,disorder
+
+False Positives: 
+- love, past - love and past are two words that might be connected literature context , because our corpus is based on books they might appear in many sentences together, therefore their feature vector can reflect on true value.
+- area, lebanon	- even-though those two noun are not defined hypernym, in some cases we can claim that lebanon is an area, and therefore the feature vector between those two world maybe reflected as a feature vector of hypernym.     
+- june, country & browning, wall & foam, protection - in those three noun pair, we don't see the connection between the two words in each pair. therefore they might not appear together in many sentences and so their feature vectors are not indicative enough.   
+
+False Negatives:
+- work,employment & wit,humour &  wife, woman - 
+  the meaning of the two words in each pair here is very similar and as a result they might not appear together in one sentence,and so we don't have enough information to create accurate feature vector between them.
+- volunteer,men & wind,direction - in our opinion, the definition of those pairs as hypernym is a bit ambiguous. therefor the classifier defines them as hypernym in contrast to the data set.  
 
 
 ## Project workflow and summary

@@ -19,7 +19,6 @@ public class ClassifierTrainer {
         if (data.classIndex() == -1)
             data.setClassIndex(data.numAttributes() - 1);
 
-        //should my classifier be incremental or batch?
         return buildClassifier(data, false);
 
     }

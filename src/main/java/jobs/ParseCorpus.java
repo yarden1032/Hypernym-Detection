@@ -93,7 +93,7 @@ static Mapper.Context context;
             return (new Text(stToText));
         }
 
-        private static void DFSSyntatticNgram(List<List<SyntacticNgram>> typeInSentencesTree, ArrayList<SyntacticNgram> path, int lastLevel,int currentLevel, SyntacticNgram firstSyn,boolean isFirstRound,long numOfOccurrences)  {
+        private static void DFSSyntatticNgram(List<List<SyntacticNgram>> typeInSentencesTree, ArrayList<SyntacticNgram> path, int lastLevel,int currentLevel, SyntacticNgram firstSyn,boolean isFirstRound,long numOfOccurrences) throws IOException, InterruptedException {
             if (currentLevel > lastLevel && !path.isEmpty()) {
                 String[] arrayString = new String[1];
                 arrayString[0] = path.get(0).head_word;
@@ -103,7 +103,7 @@ static Mapper.Context context;
                 if(path.get(0).type.contains("NN") && path.get(path.size() - 1).type.contains("NN"))
                 {
                 NounPair nounPair = null;
-                nounPair = new NounPair((path.get(0).head_word), (path.get(path.size() - 1).head_word));
+                nounPair = new NounPair(JobsRunnable.executeScript(path.get(0).head_word),JobsRunnable.executeScript(path.get(path.size() - 1).head_word));
                 try {
                     context.write(new DependencyPath(CreateText(path), new LongWritable(numOfOccurrences)),
                             nounPair);
@@ -137,13 +137,11 @@ static Mapper.Context context;
                     }
                 }
             }
-
         }
 
         @Override
         protected void cleanup(Mapper<LongWritable, Text, DependencyPath, NounPair>.Context context) throws IOException, InterruptedException {
             System.out.println("finished map");
-            System.out.println(context);
         }
     }
 

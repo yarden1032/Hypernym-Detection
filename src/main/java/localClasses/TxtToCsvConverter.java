@@ -6,8 +6,6 @@ import java.util.ArrayList;
 //this class receives as input the data set for training and testing as txt and return arff file
 public class TxtToCsvConverter {
 
-    static final String csvPath = "vectors.csv";
-
     public ArrayList<String> convert(String inputPath,String outputPath) throws IOException {
         ArrayList<String> nounPairs = new ArrayList<>();
         try (BufferedReader br = new BufferedReader(new FileReader(inputPath))) {

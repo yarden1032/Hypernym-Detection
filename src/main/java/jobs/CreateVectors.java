@@ -59,15 +59,6 @@ public class CreateVectors {
         }
     }
 
-    public static class PartitionerClass extends Partitioner<NounPair, DependencyPath> {
-
-        @Override
-        public int getPartition(NounPair key, DependencyPath value, int numPartitions) {
-            return (key.hashCode() & 0xFFFFFFF) % numPartitions; // Make sure that equal occurrences will end up in same reducer
-        }
-    }
-
-
     public static class ReducerClass extends Reducer<NounPair, DependencyPath, Text, BooleanWritable> {
 
         private long featureLexiconSize;

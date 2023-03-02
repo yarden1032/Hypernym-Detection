@@ -79,7 +79,6 @@ public class Main {
             deleteBucketAndContents(jarBucketName + "4");
             deleteBucketAndContents(jarBucketName + "5");
             downloadFromS3(jarBucketName,"jobs/" + "Create Vectors/" + "part-r-00000","output");
-//            Instances data = downloadAndConvert(jarBucketName);
             ArrayList<String> orderedNounPairs = new TxtToCsvConverter().convert("output",csvPath);
             ConverterUtils.DataSource source = new ConverterUtils.DataSource(csvPath);
             Instances  data = source.getDataSet();
