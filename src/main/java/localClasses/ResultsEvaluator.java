@@ -35,11 +35,10 @@ public class ResultsEvaluator {
 
     private void resultExample(Evaluation evaluation) {
         List<Prediction> predictionList = evaluation.predictions();
-        List<String> truePositives = new ArrayList<>();
+        /*List<String> truePositives = new ArrayList<>();
         List<String> falsePositives = new ArrayList<>();
         List<String> trueNegatives = new ArrayList<>();
         List<String> falseNegatives = new ArrayList<>();
-//        if (predictionList.size() == nounPairs.size()) {
             boolean complete = false;
             for (int i = 0; !complete && i < predictionList.size(); i++) {
                 // 1 is true 0 is false
@@ -69,7 +68,24 @@ public class ResultsEvaluator {
         System.out.println("True Positives: " + truePositives + "\n");
         System.out.println("False Positives: " + falsePositives + "\n");
         System.out.println("True Negatives: " + trueNegatives + "\n");
-        System.out.println("False Negatives: " + falseNegatives + "\n");
-    }
+        System.out.println("False Negatives: " + falseNegatives + "\n"); */
 
+        List<String> predictedTrue = new ArrayList<>();
+        boolean complete = false;
+        for (int i = 0; !complete && i < predictionList.size(); i++) {
+            // 1 is true 0 is false
+            Prediction currPrediction = predictionList.get(i);
+            String currNounPair = nounPairs.get(i);
+            if (currPrediction.predicted() == 1) {
+                predictedTrue.add(currNounPair);
+            }
+
+            if (predictedTrue.size() == 50) {
+                complete = true;
+            }
+        }
+
+        System.out.println(predictedTrue);
+
+    }
 }
