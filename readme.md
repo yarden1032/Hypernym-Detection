@@ -29,23 +29,44 @@ Google syntactic N-grams corpus -  http://storage.googleapis.com/books/syntactic
 
 
 #### Results
+
 after running a classifier based on Naive Bayes algorithm the measures received were:
 
-Precision - 0.667550839964633
+Precision: 0.7046979865771812
 
-Recall - 0.9556962025316456
+Recall: 0.9459459459459459
 
-F1 - score - 0.7860489328474752
+F1 Score: 0.8076923076923076
 
 #### Analysis
 
-True-positive noun pairs:
+True Positives: 
+- www,web
+- world,men
+- work,point
+- work,creation
+- wool,hair
 
-False-positive noun pairs: 
+True Negatives: 
+- touch,style
+- photography,representation
+- phase,r
+- metabolism,energy
+- member,organization
 
-True-negative noun pairs:
+False Positives:
+- town,region
+- touch,sense
+- top,crown
+- tone,speech
+- tone,quality
 
-False-negative noun pairs: 
+False Negatives: 
+- world,character
+- work,employment
+- wit,humour
+- winter,right
+- volunteer,men
 
 
 ## Project workflow and summary
