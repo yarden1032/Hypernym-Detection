@@ -12,6 +12,7 @@ import localClasses.ClassifierTrainer;
 import localClasses.ResultsEvaluator;
 import localClasses.TxtToCsvConverter;
 import org.apache.commons.io.FileUtils;
+import org.tinylog.Logger;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ec2.Ec2Client;
@@ -32,7 +33,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
 import static java.lang.System.exit;
 
 
@@ -54,8 +54,9 @@ public class Main {
     private static final AWSCredentials credentials=new DefaultAWSCredentialsProviderChain().getCredentials();
 
     public static void main(String[] args) throws Exception {
+        Logger.info("Start of Hypernym");
         if (args.length < 4) {
-            System.out.println("please provide all the args - input, hypmernym, DPMin, jarfile, name of bucket");
+            Logger.error("please provide all the args - input, hypmernym, DPMin, jarfile, name of bucket");
             exit(1);
         }
         jarfileNme =args[3];
@@ -68,8 +69,7 @@ public class Main {
         uploadJar(jarfileNme, jarBucketName);
         uploadJar(txtHypernymPath, jarBucketName +"2");
         uploadJar(inputPath, jarBucketName +"3");
-
-        System.out.println("init cluster");
+        Logger.debug("init cluster");
         if(initHadoopJar(jarBucketName)) {
 
             //after those two jobs finish, we have S3 bucket containing the data we would like to learn from
@@ -92,7 +92,7 @@ public class Main {
         }
         else
         {
-            System.out.println("Error during cluster job, please get to the buckets to investigate");
+            Logger.debug("Error during cluster job, please get to the buckets to investigate");
         }
     }
 
@@ -105,12 +105,11 @@ public class Main {
         try {
             File f = new File(txtVectorsPath);
             if(f.delete()) {
-                System.out.println("output file replaced with new one");
+                Logger.info("output file replaced with new one");
             }
         }
         catch(Exception e) {
-            //No file, all good
-
+            Logger.debug("No file, all good",e);
         }
         AmazonS3 s3Client = AmazonS3ClientBuilder.standard()
                 .withCredentials(new AWSStaticCredentialsProvider(credentials)).withRegion(String.valueOf(region))
@@ -130,14 +129,14 @@ public class Main {
 
         try {
             s3.headBucket(headBucketRequest);
-
-
         } catch (Exception e) {
+            Logger.debug("couldn't get buckethead",e);
             File managerJar = new File(jarFilePath);
             SetupS3(s3, bucketName);
             PutObjectRequest requestManager = PutObjectRequest.builder()
                     .bucket(bucketName).key(jarFilePath).build();
             s3.putObject(requestManager, RequestBody.fromFile(managerJar));
+
         }
 
     }
@@ -146,14 +145,13 @@ public class Main {
         try {
             CreateBucketRequest request = CreateBucketRequest.builder().bucket(bucketName).build();
             s3Client.createBucket(request);
-            System.out.println("Creating bucket: " + bucketName);
+            Logger.info("Creating bucket: " + bucketName);
             s3Client.waiter().waitUntilBucketExists(HeadBucketRequest.builder()
                     .bucket(bucketName)
                     .build());
-            System.out.println(bucketName + " is ready.");
-            System.out.printf("%n");
+            Logger.info(bucketName + " is ready.");
         } catch (S3Exception e) {
-            System.err.println(e.awsErrorDetails().errorMessage());
+            Logger.error(e);
             exit(1);
         }
     }
@@ -163,14 +161,11 @@ public class Main {
         try {
             CreateKeyPairRequest request = CreateKeyPairRequest.builder()
                     .keyName(keyName).build();
-
             ec2.createKeyPair(request);
-            System.out.printf(
-                    "Successfully created key pair named %s",
-                    keyName);
+            Logger.info("Successfully created key pair named %s", keyName);
 
         } catch (Ec2Exception e) {
-
+            Logger.error(e);
         }
     }
 
@@ -234,7 +229,7 @@ public class Main {
         RunJobFlowResult runJobFlowResult = mapReduce.runJobFlow(runFlowRequest);
 
         String jobFlowId = runJobFlowResult.getJobFlowId();
-        System.out.println("Ran job flow with id: " + jobFlowId);
+        Logger.info("Ran job flow with id: " + jobFlowId);
         return waiterJob(jobFlowId,mapReduce);
     }
 
@@ -247,7 +242,7 @@ public class Main {
 
             ClusterStatus status = cluster.getStatus();
             if (status.getState().equals(ClusterState.TERMINATED.toString())) {
-                System.out.println("Job flow terminated with state: " + status.getState());
+                Logger.info("Job flow terminated with state: " + status.getState());
                 return true;
             } else {
                 if(status.getState().equals(ClusterState.TERMINATED_WITH_ERRORS.toString()))
@@ -255,7 +250,7 @@ public class Main {
                     return false;
                 }
                 else {
-                    System.out.println("Job flow is still running with state: " + status.getState());
+                    Logger.info("Job flow is still running with state: " + status.getState());
                 }
             }
 

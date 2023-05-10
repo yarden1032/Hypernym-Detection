@@ -8,6 +8,7 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Partitioner;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.tinylog.Logger;
 
 import java.io.IOException;
 import java.util.Vector;
@@ -33,7 +34,7 @@ public class CreateVectors {
                         try {
                             context.write(new NounPair(nouns[0], nouns[1]), new DependencyPath(new LongWritable(Long.parseLong(pathId)), new Text(path), new LongWritable(Long.parseLong(numOfOccurrencesPerPath))));
                         } catch (NumberFormatException ex) {
-                            System.out.println("failed to parse to long: " + ex.getMessage());
+                            Logger.error("failed to parse to long: " + ex.getMessage());
                         }
                 }
             }
@@ -95,7 +96,7 @@ public class CreateVectors {
                     isFromHypernymFile = true;
                       }
                      } catch (ClassCastException ex) {
-                      System.out.println("failed to cast to int: " + ex.getMessage());
+                      Logger.error("failed to cast to int: " + ex.getMessage());
                      }
                 }
                 if (featureVector.size() > 0 && isFromHypernymFile) {

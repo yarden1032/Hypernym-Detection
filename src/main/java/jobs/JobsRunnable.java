@@ -14,6 +14,7 @@ import org.apache.hadoop.mapreduce.lib.input.MultipleInputs;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
+import org.pmw.tinylog.Logger;
 
 import java.io.*;
 
@@ -37,16 +38,16 @@ public class JobsRunnable {
             System.exit(1);
         }
 
-        System.out.println("args length is "+args.length);
+        Logger.info("args length is "+args.length);
         corpusPath = args[0];
-        System.out.println("arg number 1: "+corpusPath);
+        Logger.info("arg number 1: "+corpusPath);
         bucketPath = args[1];
-        System.out.println("arg number 2: "+bucketPath);
-        System.out.println(bucketPath);
+        Logger.info("arg number 2: "+bucketPath);
+        Logger.info(bucketPath);
         hypernymPath = args[2];
         DPmin = Long.parseLong(args[3]);
-        System.out.println("arg number 2: "+DPmin);
-        System.out.println(DPmin);
+        Logger.info("arg number 2: "+DPmin);
+        Logger.info(DPmin);
 
 
         // Split Corpus

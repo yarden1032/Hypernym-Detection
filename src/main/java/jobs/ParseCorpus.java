@@ -10,6 +10,7 @@ import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Partitioner;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.tinylog.Logger;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -46,9 +47,9 @@ static Mapper.Context context;
                        synArray.add(new SyntacticNgram(splitter[0], splitter[1], splitter[2], Long.parseLong(splitter[3]), total_count));
                    }
                }
-               catch (NumberFormatException ignored)
+               catch (NumberFormatException e)
                {
-                   System.out.println("failed to convert to long");
+                   Logger.error("failed to convert to long",e);
                }
             }
 
@@ -75,7 +76,7 @@ static Mapper.Context context;
                                 try {
                                     DFSSyntatticNgram(typeInSentencesTree, path, j, i, typeInSentencesTree.get(i).get(k),true,total_count);
                                 } catch (Exception e) {
-                                    System.out.println("null stuff");
+                                    Logger.error("null stuff",e);
                                 }
                             }
                         }
@@ -108,9 +109,9 @@ static Mapper.Context context;
                     context.write(new DependencyPath(CreateText(path), new LongWritable(numOfOccurrences)),
                             nounPair);
                 } catch (IOException e) {
-                    System.out.println("IO exception");
+                    Logger.error("IO exception");
                 } catch (InterruptedException e) {
-                    System.out.println("InterruptedException");
+                    Logger.error("InterruptedException",e);
                 }
             }
                 return;
@@ -133,7 +134,7 @@ static Mapper.Context context;
                     try{DFSSyntatticNgram(typeInSentencesTree, path, lastLevel, currentLevel +1, firstSyn,false,numOfOccurrences);
                     }
                     catch(StackOverflowError e){
-                        System.out.println("stackoverflow Was here: "+typeInSentencesTree);
+                        Logger.error("stackoverflow Was here: "+typeInSentencesTree,e);
                     }
                 }
             }
@@ -141,7 +142,7 @@ static Mapper.Context context;
 
         @Override
         protected void cleanup(Mapper<LongWritable, Text, DependencyPath, NounPair>.Context context) throws IOException, InterruptedException {
-            System.out.println("finished map");
+            Logger.info("finished map");
         }
     }
 
@@ -153,7 +154,7 @@ static Mapper.Context context;
 
             @Override
             public void setup(Context context) {
-                System.out.println("setupReducer");
+                Logger.info("setupReducer");
                 DPmin = context.getConfiguration().getLong("DPmin", 5);
                 featureLexiconSizeCounter = context.getCounter(CounterType.FEATURE_LEXICON);
             }
@@ -162,7 +163,6 @@ static Mapper.Context context;
         @Override
         public void reduce(DependencyPath path, Iterable<NounPair> occurrencesList, Context context)
                 throws IOException, InterruptedException {
-          //  System.out.println("reduce:"+path);
             StringBuilder valueString = new StringBuilder();
             long counter = 0;
             for (NounPair value : occurrencesList) {

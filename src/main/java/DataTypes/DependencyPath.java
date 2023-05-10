@@ -45,13 +45,6 @@ public class DependencyPath implements WritableComparable<DependencyPath> {
         numOfOccurrences = new LongWritable ();
     }
 
-    public DependencyPath (Text path) {
-        idInVector = new LongWritable();
-        typeInSentence = path;
-        isReal = new BooleanWritable(false);
-        numOfOccurrences = new LongWritable ();
-    }
-
 
     @Override
     public void write(DataOutput dataOutput) throws IOException {

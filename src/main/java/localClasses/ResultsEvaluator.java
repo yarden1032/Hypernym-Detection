@@ -1,5 +1,6 @@
 package localClasses;
 
+import org.tinylog.Logger;
 import weka.classifiers.Classifier;
 import weka.classifiers.Evaluation;
 import weka.classifiers.evaluation.Prediction;
@@ -20,7 +21,7 @@ public class ResultsEvaluator {
     }
 
     public void evaluateResults(Instances data, Classifier classifier) throws Exception {
-        System.out.println("Evaluating results");
+        Logger.info("Evaluating results");
         Evaluation eval = new Evaluation(data);
         eval.crossValidateModel(classifier, data, 10, new Random(1));
         /**Precision - how many true positive from all positive (TP)/(TP + FP)
@@ -29,7 +30,7 @@ public class ResultsEvaluator {
         double precision = eval.precision(data.classIndex());
         double recall = eval.recall(data.classIndex());
         double f1 = eval.fMeasure(data.classIndex());
-        System.out.println("Precision: " + precision + "\n" + "Recall: " + recall + "\n" + "F1 Score: " + f1 + "\n");
+        Logger.info("Precision: " + precision + "\n" + "Recall: " + recall + "\n" + "F1 Score: " + f1 + "\n");
         //resultExample(eval);
     }
 
@@ -65,9 +66,9 @@ public class ResultsEvaluator {
             }
         }
 
-        System.out.println("True Positives: " + truePositives + "\n");
-        System.out.println("False Positives: " + falsePositives + "\n");
-        System.out.println("True Negatives: " + trueNegatives + "\n");
-        System.out.println("False Negatives: " + falseNegatives + "\n");
+        Logger.info("True Positives: " + truePositives + "\n");
+        Logger.info("False Positives: " + falsePositives + "\n");
+        Logger.info("True Negatives: " + trueNegatives + "\n");
+        Logger.info("False Negatives: " + falseNegatives + "\n");
     }
 }
